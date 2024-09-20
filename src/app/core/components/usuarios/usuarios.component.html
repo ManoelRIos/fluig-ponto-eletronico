@@ -1,0 +1,52 @@
+<div class="panel panel-default">
+    <div class="panel-heading">Usuário Corrente</div>
+    <div class="panel-body">
+        <div class="row">
+            <div class="col-md-3">
+                <button type="button" class="btn btn-info" (click)="geCurrentUser()">Carregar</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12 fs-md-margin-top">
+              <small>Veja o log</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading">Usuários ativos do Fluig</div>
+    <div class="panel-body">
+        <div class="row">
+            <div class="col-md-3">
+                <button type="button" class="btn btn-info" (click)="getUsuarios()">Carregar</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="text-nowrap fs-v-align-middle">Nome</th>
+                                <th scope="col" class="text-nowrap fs-v-align-middle">Login</th>
+                                <th scope="col" class="text-nowrap fs-v-align-middle">Email</th>
+                                <th scope="col" class="text-nowrap fs-v-align-middle">Ativo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <ng-container *ngFor="let usuario of usuarios; index as i;">
+                                <tr>
+                                    <td class="text-nowrap fs-v-align-middle">{{usuario.colleagueName}}</td>
+                                    <td class="text-nowrap fs-v-align-middle">{{usuario.login}}</td>
+                                    <td class="text-nowrap fs-v-align-middle">{{usuario.mail}}</td>
+                                    <td class="text-nowrap fs-v-align-middle">{{usuario.active}}</td>
+                                </tr>
+                            </ng-container>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

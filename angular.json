@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "auth-fluig": {
+    "app-ponto-eletronico": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/auth-fluig",
+            "outputPath": "../wcm/widget/wgt_ponto_eletronico/src/main/webapp/resources/js/app-angular",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -41,8 +41,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "5mb",
+                  "maximumError": "10MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -50,7 +50,13 @@
                   "maximumError": "4kB"
                 }
               ],
-              "outputHashing": "all"
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ],
+              "outputHashing": "none"
             },
             "development": {
               "optimization": false,
@@ -62,12 +68,15 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.mjs"
+          },
           "configurations": {
             "production": {
-              "buildTarget": "auth-fluig:build:production"
+              "buildTarget": "app-ponto-eletronico:build:production"
             },
             "development": {
-              "buildTarget": "auth-fluig:build:development"
+              "buildTarget": "app-ponto-eletronico:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -98,5 +107,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": "805cf1e1-8184-495a-beb1-e94735900006"
   }
 }
