@@ -1,4 +1,4 @@
 export interface DataValues {
   fieldId: string;
-  value: string;
+  value: string | number | undefined;
 }

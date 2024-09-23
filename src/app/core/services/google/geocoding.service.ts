@@ -27,8 +27,6 @@ export class GeocodingService {
       .map((coord) => `${coord.lat},${coord.lng}`)
       .join('|');
 
-    console.log(destinationsParam);
-
     return this.httpClient.get(
       `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originsParam}&destinations=${destinationsParam}&key=${this.apiKey}`
     );

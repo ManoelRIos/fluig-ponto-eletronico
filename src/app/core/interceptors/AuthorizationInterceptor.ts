@@ -12,23 +12,29 @@ declare const OAuth: any;
 
 @Injectable()
 export class AuthorizationInterceptor implements HttpInterceptor {
+  protectedRoutes = [
+    '/api/public/ecm/dataset/datasets',
+    '/ecm-forms/api/v2/cardindex/',
+    '/api/public/2.0/users/getCurrent',
+  ];
+
   intercept(
     req: HttpRequest<any>,
     next: HttpHandler
   ): Observable<HttpEvent<any>> {
-    console.log(req);
-    if (isDevMode() && req.url.includes('/ecm')) {
-      console.log('entrei');
+    if (
+      isDevMode() &&
+      this.protectedRoutes.some((protectedRoute) =>
+        req.url.startsWith(protectedRoute)
+      )
+    ) {
       const { method, url, body } = req;
       const urlComplete = `${environment.baseUrl}${url}`;
-      console.log(urlComplete);
       const oauthHeaders = this.getOAuthHeaders({
         url: urlComplete,
         method,
         body,
       });
-
-      console.log(oauthHeaders);
 
       req = req.clone({
         setHeaders: { ...oauthHeaders },

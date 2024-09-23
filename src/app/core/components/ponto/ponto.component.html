@@ -64,18 +64,18 @@
       </div>
     </div>
   </div>
-  <img
+  <!-- <img
     id="clock-in-img"
     class="w-60"
     src="/wgt_ponto_eletronico/resources/js/app-angular/browser/assets/clock-in.svg"
     alt="Clock-in"
-  />
-  <!-- <img
+  /> -->
+  <img
     id="clock-in-img"
     class="w-60"
     src="/assets/clock-in.svg"
     alt="Clock-in"
-  /> -->
+  />
 </div>
 
 <div class="pt-8">
@@ -159,14 +159,14 @@
       <tbody *ngFor="let work of workRecords">
         <tr class="bg-white border-b hover:bg-amber-50">
           <td class="px-6 py-4 font-medium text-slate-900 whitespace-nowrap">
-            {{ work.created_at }}
+            {{ work.criado_em }}
           </td>
-          <td class="px-6 py-4">{{ work.user }}</td>
-          <td class="px-6 py-4">{{ work.diaDaSemana }}</td>
-          <td class="px-6 py-4">{{ work.entrada }}</td>
-          <td class="px-6 py-4">{{ work.entradaAlmoco }}</td>
-          <td class="px-6 py-4">{{ work.saidaAlmoco }}</td>
-          <td class="px-6 py-4">{{ work.saida }}</td>
+          <td class="px-6 py-4">{{ work.usuario_nome }}</td>
+          <td class="px-6 py-4">{{ work.dia_semana }}</td>
+          <td class="px-6 py-4">{{ work.hora_entrada }}</td>
+          <td class="px-6 py-4">{{ work.hora_almoco }}</td>
+          <td class="px-6 py-4">{{ work.hora_saida_almoco }}</td>
+          <td class="px-6 py-4">{{ work.hora_saida }}</td>
           <td class="px-6 py-4">{{ work.saldoHoras }}</td>
           <td class="flex items-center px-6 py-4">
             <a href="#" class="font-medium text-yellow-600 hover:underline">

@@ -29,7 +29,6 @@ export class UsuariosComponent {
       .pipe(first())
       .subscribe({
         next: (response) => {
-          console.log(response);
           if (response.length) {
             this.usuarios = response;
           }
@@ -46,7 +45,6 @@ export class UsuariosComponent {
       .pipe(first())
       .subscribe({
         next: (response) => {
-          console.log(response);
         },
         error: (ex) => {
           Swal.fire({ icon: 'error', title: 'Oops...', html: ex });

@@ -15,6 +15,7 @@ import loadFluigCalendar from '../../utils/loadFluigCalendar';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { distanceCalculate } from '../../utils/utils';
+import { Value, Values, WorkRecord } from '../../interfaces/work-record';
 
 declare const FLUIGC: any;
 
@@ -34,6 +35,7 @@ export class PontoComponent {
   isWorking: boolean = false;
   currentAddress: any;
   workRecords: any = [];
+  currentWorkRecord: any;
   dailyWorkedHours: number = 0;
   monthlyWorkedHours: number = 0;
   currentDate: any;
@@ -53,6 +55,7 @@ export class PontoComponent {
   ngOnInit(): void {
     this.geCurrentUser();
     this.getUsers();
+    this.getAllWorkRecords();
     this.setWorkRecords();
     loadFluigCalendar(['#dateStart', '#dateEnd']);
   }
@@ -67,19 +70,19 @@ export class PontoComponent {
     }
   }
 
+  calculateTotalWorkHours(){
+    
+  }
+
   async recordWorkTime() {
     // Obtém a localização do usuário
     await this.getCurrentLocation();
     await this.getAddress();
+    await this.getDateTime();
 
-    const distance = distanceCalculate(
-      this.latitude,
-      this.longitude,
-      -15.7915298,
-      -47.8921573
-    );
+    const isAtWork = this.verifyAddress();
 
-    if (distance > 1) {
+    if (!isAtWork) {
       // Exibe o endereço no alerta
       Swal.fire({
         icon: 'warning',
@@ -87,14 +90,68 @@ export class PontoComponent {
           'Você está fora do seu local habitual de trabalho. Seu registro será encaminhado para aprovação do RH.',
         html: `Localização atual: ${this.currentAddress}`,
       });
-    } else {
-      // Registro de ponto
+    }
+
+    // verificar se já registrou o ponto
+    let constraints = [
+      new Constraint('usuario_codigo', this.currentUser?.tenantId),
+      new Constraint(
+        'criado_em',
+        format(this.currentDate.datetime, 'yyyy-MM-dd')
+      ),
+    ];
+    const workRecord: any = await this.getWorkRecord(constraints);
+
+    if (workRecord.length) {
+      let fieldId = 'hora_almoco';
+      let value = format(this.currentDate.datetime, 'HH:mm');
+      console.log(workRecord[0]);
+      if (workRecord[0].hora_almoco) {
+        fieldId = 'hora_saida_almoco';
+      }
+      if (workRecord[0].hora_saida_almoco) {
+        fieldId = 'hora_saida';
+      }
+
+      let data = [
+        {
+          fieldId: fieldId,
+          value: value,
+        },
+      ];
+      this.putWorkRecord(workRecord[0].documentid, data);
+    }
+    // Registro de ponto]
+    else {
       this.postWorkRecord();
-      this.putWorkRecord();
     }
   }
 
-  putWorkRecord() {}
+  async putWorkRecord(documentId: number, data: any) {
+    await this.getDateTime();
+    const now = this.currentDate.datetime;
+
+    this.lastRegister =
+      format(now, 'HH:mm') + ' - ' + format(now, 'dd/MM/yyyy');
+
+    this.formularioService
+      .putData(91586, documentId, data)
+      .pipe(first())
+      .subscribe({
+        next: (response) => {
+          console.log(response);
+
+          this.currentWorkRecord = response;
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Ponto registrado!',
+            html: `Seu ponto foi registrado (${this.currentWorkRecord.cardId})`,
+          });
+          this.getAllWorkRecords();
+        },
+      });
+  }
 
   async postWorkRecord() {
     this.isWorking = !this.isWorking;
@@ -105,34 +162,32 @@ export class PontoComponent {
 
     await this.getDateTime();
     const now = this.currentDate.datetime;
-    this.workRecords.push({
-      id: FLUIGC?.utilities.randomUUID(),
-      created_at: now,
-      user: this.currentUser?.fullName,
-      diaDaSemana: format(now, 'EEEE', { locale: ptBR }),
-      entrada: format(now, 'HH:mm'),
-      entradaAlmoco: format(now, 'HH:mm'),
-      saidaAlmoco: format(now, 'HH:mm'),
-      saida: format(now, 'HH:mm'),
-      saldoHoras: '+ 01:00',
-      status: '',
-      idUser: this.currentUser?.tenantId,
-    });
 
     this.lastRegister =
       format(now, 'HH:mm') + ' - ' + format(now, 'dd/MM/yyyy');
-    this.localStorageService.set('workRecords', this.workRecords);
 
-    Swal.fire({
-      icon: 'success',
-      title: 'Ponto registrado!',
-      html: `Localização atual: ${this.currentAddress}`,
-    });
-
-    let data = {
-      fieldId: 'criado_em',
-      value: now,
-    };
+    let data = [
+      {
+        fieldId: 'criado_em',
+        value: format(now, 'yyyy-MM-dd'),
+      },
+      {
+        fieldId: 'dia_semana',
+        value: format(now, 'EEEE', { locale: ptBR }),
+      },
+      {
+        fieldId: 'hora_entrada',
+        value: format(now, 'HH:mm'),
+      },
+      {
+        fieldId: 'usuario_nome',
+        value: this.currentUser?.fullName,
+      },
+      {
+        fieldId: 'usuario_codigo',
+        value: this.currentUser?.tenantId,
+      },
+    ];
 
     this.formularioService
       .postData(91586, data)
@@ -140,6 +195,48 @@ export class PontoComponent {
       .subscribe({
         next: (response) => {
           console.log(response);
+
+          this.currentWorkRecord = response;
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Ponto registrado!',
+            html: `Seu ponto foi registrado (${this.currentWorkRecord.cardId})`,
+          });
+          this.getAllWorkRecords();
+        },
+      });
+  }
+
+  getWorkRecord(constraint: Constraint[] = []): Promise<any> {
+    return new Promise((resolve, reject) => {
+      this.formularioService
+        .getData('pontoRegistro', constraint)
+        .pipe(first())
+        .subscribe({
+          next: (response) => {
+            resolve(response);
+          },
+          error: (ex) => {
+            Swal.fire({ icon: 'error', title: 'Oops...', html: ex });
+          },
+        });
+    });
+  }
+
+  getAllWorkRecords(constraint: Constraint[] = []) {
+    this.formularioService
+      .getData('pontoRegistro', constraint)
+      .pipe(first())
+      .subscribe({
+        next: (response) => {
+          console.log(response);
+          if (response.length) {
+            this.workRecords = response;
+          }
+        },
+        error: (ex) => {
+          Swal.fire({ icon: 'error', title: 'Oops...', html: ex });
         },
       });
   }
@@ -149,7 +246,6 @@ export class PontoComponent {
       this.worldTimeService.getDateTime().subscribe(
         (response) => {
           this.currentDate = response;
-          console.log(this.currentDate);
           resolve();
         },
         (error) => {
@@ -167,9 +263,7 @@ export class PontoComponent {
           (position) => {
             this.latitude = position.coords.latitude;
             this.longitude = position.coords.longitude;
-            console.log(
-              `Latitude: ${this.latitude}, Longitude: ${this.longitude}`
-            );
+
             resolve(); // Resolve a Promise quando a localização for obtida
           },
           (error) => {
@@ -214,20 +308,6 @@ export class PontoComponent {
     });
   }
 
-  getDistanceLocation(lat: number, lng: number) {
-    const origins = [{ lat: lat, lng: lng }];
-    const destinations = [{ lat: -15.7915298, lng: -47.8921573 }];
-
-    this.geocodingService.getDistanceMatrix(origins, destinations).subscribe(
-      (response) => {
-        console.log('Distâncias:', response);
-      },
-      (error) => {
-        console.error('Erro ao obter distâncias:', error);
-      }
-    );
-  }
-
   getUsers() {
     let constraint: Constraint[] = [];
     constraint.push(new Constraint('active', true));
@@ -256,7 +336,6 @@ export class PontoComponent {
       .subscribe({
         next: (response) => {
           this.currentUser = response;
-          console.log(this.currentUser);
         },
         error: (ex) => {
           Swal.fire({ icon: 'error', title: 'Oops...', html: ex });
@@ -270,7 +349,20 @@ export class PontoComponent {
         .toLowerCase()
         .includes(this.userSearchQuery.toLowerCase())
     );
+  }
 
-    console.log(this.filteredUsers);
+  verifyAddress(): boolean {
+    const distance = distanceCalculate(
+      this.latitude,
+      this.longitude,
+      -16.0814528,
+      -47.9789237
+    );
+
+    if (distance > 1) {
+      return false;
+    }
+
+    return true;
   }
 }

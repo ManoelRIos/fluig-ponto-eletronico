@@ -1,4 +1,8 @@
-import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import {
+  HTTP_INTERCEPTORS,
+  provideHttpClient,
+  withInterceptorsFromDi,
+} from '@angular/common/http';
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { routes } from './app.routes';
@@ -17,6 +21,11 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
     { provide: APP_BASE_HREF, useValue: APP_BASE_URL.APP_BASE },
     { provide: HTTP_INTERCEPTORS, useClass: LoadingInterceptor, multi: true },
-    { provide: HTTP_INTERCEPTORS, useClass: AuthorizationInterceptor, multi: true}, provideAnimationsAsync(),
-  ]
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthorizationInterceptor,
+      multi: true,
+    },
+    provideAnimationsAsync(),
+  ],
 };
