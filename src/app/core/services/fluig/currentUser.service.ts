@@ -18,6 +18,7 @@ export class CurrentUserService extends BaseService {
         return this.httpClient.get<any>('/api/public/2.0/users/getCurrent').pipe(
             first(),
             map((response: any) => ({
+                id: response.content.id,
                 tenantId: response.content.extData.tenantId,
                 tenantCode: response.content.extData.tenantCode,
                 login: response.content.login,

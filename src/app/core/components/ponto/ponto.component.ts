@@ -30,7 +30,6 @@ export class PontoComponent {
 
   latitude: number = 0;
   longitude: number = 0;
-  isWorking: boolean = false;
   currentAddress: any;
   workRecords: any = [];
   currentWorkRecord: any;
@@ -56,7 +55,8 @@ export class PontoComponent {
     await this.getDateTime();
     await this.geCurrentUser();
     await this.getUsers();
-    await this.getAllWorkRecords();    
+
+    await this.getAllWorkRecords();
     await this.setHoursWorked();
     this.lastRegister =
       format(this.workRecords[this.workRecords.length - 1].datetime, 'HH:mm') +
@@ -88,6 +88,7 @@ export class PontoComponent {
     }
 
     this.postWorkRecord();
+    this.setHoursWorked();
   }
 
   async putWorkRecord(documentId: number, data: any) {
@@ -117,7 +118,6 @@ export class PontoComponent {
   }
 
   async postWorkRecord() {
-    this.isWorking = !this.isWorking;
 
     await this.getDateTime();
     const now = this.currentDate.datetime;
@@ -148,7 +148,7 @@ export class PontoComponent {
       },
       {
         fieldId: 'usuario_codigo',
-        value: this.currentUser?.tenantId,
+        value: this.currentUser?.id,
       },
       {
         fieldId: 'status',
@@ -180,7 +180,7 @@ export class PontoComponent {
     const todayWorkRecords = this.workRecords.filter((record: WorkRecord) => {
       return (
         record.criado_em === format(this.currentDate.datetime, 'yyyy-MM-dd') &&
-        Number(record.usuario_codigo) === this.currentUser?.tenantId
+        Number(record.usuario_codigo) === this.currentUser?.id
       );
     });
 
@@ -225,6 +225,9 @@ export class PontoComponent {
   }
 
   async getAllWorkRecords(constraint: Constraint[] = []): Promise<void> {
+    constraint.push(new Constraint('usuario_codigo', this.currentUser?.id));
+    console.log(this.currentUser?.id);
+
     return new Promise((resolve) => {
       this.formularioService
         .getData('pontoRegistro', constraint)
@@ -333,18 +336,21 @@ export class PontoComponent {
       });
   }
 
-  geCurrentUser() {
-    this.currentUserService
-      .getCurrentUser()
-      .pipe(first())
-      .subscribe({
-        next: (response) => {
-          this.currentUser = response;
-        },
-        error: (ex) => {
-          Swal.fire({ icon: 'error', title: 'Oops...', html: ex });
-        },
-      });
+  geCurrentUser(): Promise<void> {
+    return new Promise((resolve) => {
+      this.currentUserService
+        .getCurrentUser()
+        .pipe(first())
+        .subscribe({
+          next: (response) => {
+            this.currentUser = response;
+            resolve();
+          },
+          error: (ex) => {
+            Swal.fire({ icon: 'error', title: 'Oops...', html: ex });
+          },
+        });
+    });
   }
 
   filterUsers() {
@@ -359,8 +365,8 @@ export class PontoComponent {
     const distance = distanceCalculate(
       this.latitude,
       this.longitude,
-      -16.0814528,
-      -47.9789237
+      -15.795644646496593,
+      -47.88496112820649
     );
 
     if (distance > 1) {
