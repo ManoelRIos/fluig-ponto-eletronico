@@ -1,5 +1,5 @@
-<div class="flex justify-between">
-  <div class="flex items-center gap-2">
+<div class="flex flex-wrap justify-between gap-8">
+  <div class="flex items-center gap-2 w-96">
     <div class="bg-amber-400 p-1 rounded-lg">
       <i
         class="text-slate-800 flaticon flaticon-alarm icon-md"
@@ -12,7 +12,7 @@
     </h2>
   </div>
 
-  <div class="flex items-center gap-4">
+  <div class="flex flex-wrap items-center gap-4">
     <button
       (click)="recordWorkTime()"
       class="flex items-end gap-2 p-2 bg-amber-400 text-slate-700 rounded-lg font-bold hover:bg-amber-500 duration-300 ease-out"
@@ -21,7 +21,7 @@
       <span>{{ isWorking ? "Registrar Saída" : "Registrar Entrada" }}</span>
     </button>
 
-    <div class="bg-slate-50 shadow rounded-lg h-full p-2">
+    <div class="bg-slate-50 shadow rounded-lg p-2">
       <i
         class="px-2 flaticon flaticon-multiple-register icon-sm"
         aria-hidden="true"
@@ -54,12 +54,16 @@
       <div class="flex items-center justify-between gap-4 w-full">
         <div>
           <span>Hoje</span>
-          <p class="font-bold text-xl text-slate-700">-04:00Hrs</p>
+          <p class="font-bold text-xl text-slate-700">
+            {{ hoursWorkedToday }} Hrs
+          </p>
         </div>
         <div class="h-12 border-l border-gray-300"></div>
         <div>
           <span>Mês</span>
-          <p class="font-bold text-xl text-slate-700">200:00Hrs</p>
+          <p class="font-bold text-xl text-slate-700">
+            {{ hoursWorkedMonthly }} Hrs
+          </p>
         </div>
       </div>
     </div>
@@ -141,18 +145,14 @@
       </div>
     </div>
   </div>
-  <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+  <div class="bg-zinc-50 relative overflow-x-auto shadow-md sm:rounded-lg">
     <table class="w-full text-sm text-left rtl:text-right text-slate-50">
       <thead class="text-xs text-slate-700 uppercase bg-amber-100">
         <tr>
           <th scope="col" class="px-6 py-3">Data</th>
           <th scope="col" class="px-6 py-3">Usuário</th>
           <th scope="col" class="px-6 py-3">Dia</th>
-          <th scope="col" class="px-6 py-3">Entrada</th>
-          <th scope="col" class="px-6 py-3">Almoço</th>
-          <th scope="col" class="px-6 py-3">Saída do Almoço</th>
-          <th scope="col" class="px-6 py-3">Saída</th>
-          <th scope="col" class="px-6 py-3">Saldo de horas</th>
+          <th scope="col" class="px-6 py-3">Horário</th>
           <th scope="col" class="px-6 py-3">Ações</th>
         </tr>
       </thead>
@@ -163,11 +163,7 @@
           </td>
           <td class="px-6 py-4">{{ work.usuario_nome }}</td>
           <td class="px-6 py-4">{{ work.dia_semana }}</td>
-          <td class="px-6 py-4">{{ work.hora_entrada }}</td>
-          <td class="px-6 py-4">{{ work.hora_almoco }}</td>
-          <td class="px-6 py-4">{{ work.hora_saida_almoco }}</td>
-          <td class="px-6 py-4">{{ work.hora_saida }}</td>
-          <td class="px-6 py-4">{{ work.saldoHoras }}</td>
+          <td class="px-6 py-4">{{ work.horario_registro }}</td>
           <td class="flex items-center px-6 py-4">
             <a href="#" class="font-medium text-yellow-600 hover:underline">
               <i
@@ -182,5 +178,14 @@
         </tr>
       </tbody>
     </table>
+    <div
+      *ngIf="workRecords.length === 0"
+      class="w-full flex flex-col items-center justify-center p-4 gap-4"
+    >
+      <img class="w-36" src="/assets/not-found.svg" alt="Blank Canva" />
+      <p class="text-center text-zinc-400 font-light p-4">
+        Parece que ainda não há dados registrados por aqui.
+      </p>
+    </div>
   </div>
 </div>

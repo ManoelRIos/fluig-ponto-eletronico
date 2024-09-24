@@ -1,9 +1,10 @@
+import { format, parse, differenceInMinutes } from 'date-fns';
+
 export function getGeoLocation(): any {
   navigator.geolocation.getCurrentPosition((position) => {
     const latitude = position.coords.latitude;
-    const longitude = position.coords.longitude;    
+    const longitude = position.coords.longitude;
   });
-
 }
 
 export function distanceCalculate(
@@ -33,4 +34,30 @@ export function distanceCalculate(
 
 function toRad(value: number): number {
   return (value * Math.PI) / 180;
+}
+
+export function calculateTotalHours(intervals: string[][]): {
+  totalHours: number;
+  remainingMinutes: number;
+} {
+  let totalMinutes = 0;
+
+  for (const interval of intervals) {
+    const [startTime, endTime] = interval;
+    const parsedStartTime = parse(startTime, 'HH:mm:ss', new Date());
+    const parsedEndTime = parse(endTime, 'HH:mm:ss', new Date());
+
+    // Calculate the difference in minutes
+    const differenceInMinutesValue = differenceInMinutes(
+      parsedEndTime,
+      parsedStartTime
+    );
+    totalMinutes += differenceInMinutesValue;
+  }
+
+  // Convert total minutes into hours and remaining minutes
+  const totalHours = Math.floor(totalMinutes / 60);
+  const remainingMinutes = totalMinutes % 60;
+
+  return { totalHours, remainingMinutes };
 }

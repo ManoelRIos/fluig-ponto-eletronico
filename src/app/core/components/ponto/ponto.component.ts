@@ -1,5 +1,5 @@
 import { WorldTimeService } from './../../services/world-time.service';
-import { NgFor } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import Swal from 'sweetalert2';
 import { LocalStorageService } from '../../services/local-storage.service';
@@ -14,15 +14,13 @@ import { CurrentUser } from '../../interfaces';
 import loadFluigCalendar from '../../utils/loadFluigCalendar';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { distanceCalculate } from '../../utils/utils';
-import { Value, Values, WorkRecord } from '../../interfaces/work-record';
-
-declare const FLUIGC: any;
+import { calculateTotalHours, distanceCalculate } from '../../utils/utils';
+import { WorkRecord } from '../../interfaces/work-record';
 
 @Component({
   selector: 'app-ponto',
   standalone: true,
-  imports: [NgFor, MatAutocompleteModule, FormsModule],
+  imports: [NgFor, NgIf, MatAutocompleteModule, FormsModule],
   templateUrl: './ponto.component.html',
   styleUrl: './ponto.component.scss',
 })
@@ -40,6 +38,8 @@ export class PontoComponent {
   monthlyWorkedHours: number = 0;
   currentDate: any;
   lastRegister: string = '  00:00:00 - _/_/_';
+  hoursWorkedToday: string = '00:00';
+  hoursWorkedMonthly: string = '00:00';
 
   currentUser: CurrentUser | null = null;
   users: any = [];
@@ -52,25 +52,22 @@ export class PontoComponent {
     private worldTimeService: WorldTimeService
   ) {}
 
-  ngOnInit(): void {
-    this.geCurrentUser();
-    this.getUsers();
-    this.getAllWorkRecords();
-    this.setWorkRecords();
+  async ngOnInit() {
+    await this.getDateTime();
+    await this.geCurrentUser();
+    await this.getUsers();
+    await this.getAllWorkRecords();    
+    await this.setHoursWorked();
+    this.lastRegister =
+      format(this.workRecords[this.workRecords.length - 1].datetime, 'HH:mm') +
+      ' - ' +
+      format(
+        this.workRecords[this.workRecords.length - 1].datetime,
+        'dd/MM/yyyy'
+      );
+
     loadFluigCalendar(['#dateStart', '#dateEnd']);
   }
-
-  setWorkRecords() {
-    if (this.localStorageService.get('workRecords')) {
-      this.workRecords = this.localStorageService.get('workRecords');
-      this.lastRegister =
-        this.workRecords[this.workRecords.length - 1].entrada +
-        ' - ' +
-        this.workRecords[this.workRecords.length - 1].data;
-    }
-  }
-
-  calculateTotalWorkHours() {}
 
   async recordWorkTime() {
     // Obtém a localização do usuário
@@ -90,39 +87,7 @@ export class PontoComponent {
       });
     }
 
-    // verificar se já registrou o ponto
-    let constraints = [
-      new Constraint('usuario_codigo', this.currentUser?.tenantId),
-      new Constraint(
-        'criado_em',
-        format(this.currentDate.datetime, 'yyyy-MM-dd')
-      ),
-    ];
-    const workRecord: any = await this.getWorkRecord(constraints);
-
-    if (workRecord.length) {
-      let fieldId = 'hora_almoco';
-      let value = format(this.currentDate.datetime, 'HH:mm');
-      console.log(workRecord[0]);
-      if (workRecord[0].hora_almoco) {
-        fieldId = 'hora_saida_almoco';
-      }
-      if (workRecord[0].hora_saida_almoco) {
-        fieldId = 'hora_saida';
-      }
-
-      let data = [
-        {
-          fieldId: fieldId,
-          value: value,
-        },
-      ];
-      this.putWorkRecord(workRecord[0].documentid, data);
-    }
-    // Registro de ponto]
-    else {
-      this.postWorkRecord();
-    }
+    this.postWorkRecord();
   }
 
   async putWorkRecord(documentId: number, data: any) {
@@ -154,10 +119,6 @@ export class PontoComponent {
   async postWorkRecord() {
     this.isWorking = !this.isWorking;
 
-    //Verificar se existe horário já registrado naquele dia
-
-    //Verificar qual o horário
-
     await this.getDateTime();
     const now = this.currentDate.datetime;
 
@@ -165,6 +126,10 @@ export class PontoComponent {
       format(now, 'HH:mm') + ' - ' + format(now, 'dd/MM/yyyy');
 
     let data = [
+      {
+        fieldId: 'datetime',
+        value: now,
+      },
       {
         fieldId: 'criado_em',
         value: format(now, 'yyyy-MM-dd'),
@@ -174,8 +139,8 @@ export class PontoComponent {
         value: format(now, 'EEEE', { locale: ptBR }),
       },
       {
-        fieldId: 'hora_entrada',
-        value: format(now, 'HH:mm'),
+        fieldId: 'horario_registro',
+        value: format(now, 'HH:mm:ss'),
       },
       {
         fieldId: 'usuario_nome',
@@ -184,6 +149,10 @@ export class PontoComponent {
       {
         fieldId: 'usuario_codigo',
         value: this.currentUser?.tenantId,
+      },
+      {
+        fieldId: 'status',
+        value: 'active',
       },
     ];
 
@@ -206,15 +175,68 @@ export class PontoComponent {
       });
   }
 
-  getWorkRecord(constraint: Constraint[] = []): Promise<any> {
-    return new Promise((resolve, reject) => {
+  setHoursWorked() {
+    // Filtra os registros de trabalho do dia atual para o usuário atual
+    const todayWorkRecords = this.workRecords.filter((record: WorkRecord) => {
+      return (
+        record.criado_em === format(this.currentDate.datetime, 'yyyy-MM-dd') &&
+        Number(record.usuario_codigo) === this.currentUser?.tenantId
+      );
+    });
+
+    const hoursWorkedToday = this.extractWorkHours(todayWorkRecords);
+    console.log(hoursWorkedToday);
+    const totalHoursWorkedToday = calculateTotalHours(hoursWorkedToday);
+    console.log(totalHoursWorkedToday);
+    this.hoursWorkedToday = this.formatHours(totalHoursWorkedToday);
+    console.log(totalHoursWorkedToday);
+
+    const hoursWorkedMonthly = this.extractWorkHours(this.workRecords);
+    const totalHoursWorkedMonthly = calculateTotalHours(hoursWorkedMonthly);
+    this.hoursWorkedMonthly = this.formatHours(totalHoursWorkedMonthly);
+  }
+
+  private extractWorkHours(workRecords: WorkRecord[]): string[][] {
+    const hoursArray: string[][] = [];
+    this.getDateTime();
+
+    for (let i = 0; i < workRecords.length; i += 2) {
+      const startRecord = workRecords[i];
+      const endRecord = workRecords[i + 1] ?? {
+        horario_registro: format(this.currentDate.datetime, 'HH:mm:ss'),
+      };
+
+      hoursArray.push([
+        startRecord.horario_registro,
+        endRecord.horario_registro,
+      ]);
+    }
+
+    return hoursArray;
+  }
+
+  private formatHours(totalHours: {
+    totalHours: number;
+    remainingMinutes: number;
+  }): string {
+    return `${String(totalHours.totalHours).padStart(2, '0')}:${String(
+      totalHours.remainingMinutes
+    ).padStart(2, '0')}`;
+  }
+
+  async getAllWorkRecords(constraint: Constraint[] = []): Promise<void> {
+    return new Promise((resolve) => {
       this.formularioService
         .getData('pontoRegistro', constraint)
         .pipe(first())
         .subscribe({
           next: (response) => {
-            resolve(response);
+            if (response.length) {
+              this.workRecords = response;
+              resolve();
+            }
           },
+
           error: (ex) => {
             Swal.fire({ icon: 'error', title: 'Oops...', html: ex });
           },
@@ -222,28 +244,12 @@ export class PontoComponent {
     });
   }
 
-  getAllWorkRecords(constraint: Constraint[] = []) {
-    this.formularioService
-      .getData('pontoRegistro', constraint)
-      .pipe(first())
-      .subscribe({
-        next: (response) => {
-          console.log(response);
-          if (response.length) {
-            this.workRecords = response;
-          }
-        },
-        error: (ex) => {
-          Swal.fire({ icon: 'error', title: 'Oops...', html: ex });
-        },
-      });
-  }
-
   getDateTime(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.worldTimeService.getDateTime().subscribe(
         (response) => {
           this.currentDate = response;
+          console.log(response);
           resolve();
         },
         (error) => {

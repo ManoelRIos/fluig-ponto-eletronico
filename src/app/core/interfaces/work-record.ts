@@ -5,13 +5,14 @@ export interface Values {
 
 export interface Value {
   fieldId: string;
-  value: string
+  value: string;
 }
 
 export interface WorkRecord {
-  createdAt: string;
-  dayOfWeek: string; // Dia da semana em texto (e.g., Monday, Tuesday)
-  entryTime: string; // Hora de entrada no formato HH:mm
-  userName: string; // Nome completo do usuário
-  userCode: string; // Código do usuário (tenantId)
+  id: string;
+  datetime: string;
+  criado_em: string;
+  horario_registro: string; // Hora de entrada no formato HH:mm
+  usuario_nome: string; // Nome completo do usuário
+  usuario_codigo: number; // Código do usuário (tenantId)
 }
