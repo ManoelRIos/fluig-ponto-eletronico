@@ -70,9 +70,7 @@ export class PontoComponent {
     }
   }
 
-  calculateTotalWorkHours(){
-    
-  }
+  calculateTotalWorkHours() {}
 
   async recordWorkTime() {
     // Obtém a localização do usuário
