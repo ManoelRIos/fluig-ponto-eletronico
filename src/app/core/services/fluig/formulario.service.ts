@@ -35,7 +35,6 @@ export class FormularioService extends BaseService {
 
   public postData(documentId: number, dataValues: DataValues[]) {
     const body = { values: dataValues };
-    console.log(body);
     return this.httpClient
       .post<Values>(`/ecm-forms/api/v2/cardindex/${documentId}/cards`, body)
       .pipe(first());
@@ -43,9 +42,15 @@ export class FormularioService extends BaseService {
 
   public putData(documentId: number, cardId: number, dataValues: DataValues[]) {
     const body = { values: dataValues };
-    console.log(body);
     return this.httpClient
-      .put<Values>(`/ecm-forms/api/v2/cardindex/${documentId}/cards/${cardId}`, body)
+      .put<Values>(
+        `/ecm-forms/api/v2/cardindex/${documentId}/cards/${cardId}`,
+        body
+      )
       .pipe(first());
   }
+
+
 }
+
+

@@ -1,0 +1,67 @@
+<div
+  class="p-8 flex flex-col items-center justify-center gap-4"
+  mat-dialog-content
+>
+  <div class="flex items-center justify-center">
+    <p class="flex items-start text-xs text-slate-400 w-full">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        class="w-5 h-5 mr-1.5"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Zm0 8.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
+          clip-rule="evenodd"
+        />
+      </svg>
+
+      Ao registrar, você concorda que podemos capturar sua foto para avaliação
+      do RH. Agora sorria :) e clique em registrar!
+    </p>
+    <i
+      class="flaticon flaticon-camera icon-xl text-amber-400"
+      aria-hidden="true"
+    ></i>
+  </div>
+  <div class="video-container">
+    <video
+      class="rounded-lg w-full"
+      #video
+      [width]="WIDTH"
+      [height]="HEIGHT"
+      autoplay
+      muted
+    ></video>
+    <canvas #canvas class="hide"></canvas>
+  </div>
+
+  <div class="form-group w-full">
+    <label for="cpf" class="text-slate-600">CPF</label>
+    <input
+     [(ngModel)]="cpf"
+      id="cpf"
+      type="text"
+      class="form-control border-slate-200 placeholder:text-slate-400 rounded-r-lg"
+      placeholder="000.000.000-00"
+    />
+  </div>
+</div>
+
+<mat-dialog-actions class="flex items-center gap-4">
+  <button
+    mat-button
+    class="py-1 px-2 rounded-md text-slate-600 bg-slate-200 shadow-lg"
+    (click)="cancel()"
+  >
+    Cancelar
+  </button>
+  <button
+    mat-button
+    class="py-1 px-2 rounded-md text-emerald-600 bg-emerald-200 shadow-lg"
+    (click)="accept()"
+  >
+    Registrar
+  </button>
+</mat-dialog-actions>

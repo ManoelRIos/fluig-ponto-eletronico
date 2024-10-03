@@ -3,7 +3,7 @@ export const environment = {
     userSecurityId: 'admin',
     widgetCode: 'wgt_ponto_eletronico',
     baseUrl: 'https://federacaonacional130420.fluig.cloudtotvs.com.br',
-    assets: '/public',
+    assets: '/assets',
     consumerKey: 'Consumer Key',
     consumerSecret: 'api_secret',
     accessToken: 'f9ccb918-7e93-475a-96d4-845d7c807f80',

@@ -12,6 +12,7 @@ import { APP_BASE_URL } from './app.baseurl';
 import { AuthorizationInterceptor } from './core/interceptors/AuthorizationInterceptor';
 import { LoadingInterceptor } from './core/interceptors/LoadingInterceptor';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { MatDialogRef } from '@angular/material/dialog';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -26,6 +27,11 @@ export const appConfig: ApplicationConfig = {
       useClass: AuthorizationInterceptor,
       multi: true,
     },
+    {
+      provide: MatDialogRef,
+      useValue: {},
+    },
+
     provideAnimationsAsync(),
   ],
 };

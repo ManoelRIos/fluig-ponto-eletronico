@@ -11,10 +11,10 @@
       para você.
     </h2>
   </div>
-
+  <!-- (click)="recordWorkTime()" -->
   <div class="flex flex-wrap items-center gap-4">
     <button
-      (click)="recordWorkTime()"
+      (click)="onOpenModalFacialRecognition()"
       class="flex items-end gap-2 p-2 bg-amber-400 text-slate-700 rounded-lg font-bold hover:bg-amber-500 duration-300 ease-out"
     >
       <i class="flaticon flaticon-digital icon-md" aria-hidden="true"></i>
@@ -68,18 +68,18 @@
       </div>
     </div>
   </div>
-  <img
+  <!-- <img
     id="clock-in-img"
     class="w-60"
     src="/wgt_ponto_eletronico/resources/js/app-angular/browser/assets/clock-in.svg"
     alt="Clock-in"
-  />
-  <!-- <img
+  /> -->
+  <img
     id="clock-in-img"
     class="w-60"
     src="/assets/clock-in.svg"
     alt="Clock-in"
-  /> -->
+  />
 </div>
 
 <div class="pt-8">
@@ -164,15 +164,12 @@
           <td class="px-6 py-4">{{ work.usuario_nome }}</td>
           <td class="px-6 py-4">{{ work.dia_semana }}</td>
           <td class="px-6 py-4">{{ work.horario_registro }}</td>
-          <td class="flex items-center px-6 py-4">
+          <td class="flex items-center px-6 py-4" title="Emitir comprovante">
             <a href="#" class="font-medium text-yellow-600 hover:underline">
               <i
-                class="flaticon flaticon-edit-square icon-md"
+                class="flaticon flaticon-log-download icon-md"
                 aria-hidden="true"
               ></i>
-            </a>
-            <a href="#" class="font-medium text-rose-500 hover:underline ms-3">
-              <i class="flaticon flaticon-trash icon-md" aria-hidden="true"></i>
             </a>
           </td>
         </tr>
@@ -182,7 +179,11 @@
       *ngIf="workRecords.length === 0"
       class="w-full flex flex-col items-center justify-center p-4 gap-4"
     >
-      <img class="w-36" src="/wgt_ponto_eletronico/resources/js/app-angular/browser/assets/not-found.svg" alt="Blank Canva" />
+      <img
+        class="w-36"
+        src="/assets/not-found.svg"
+        alt="Blank Canva"
+      />
       <!-- /wgt_ponto_eletronico/resources/js/app-angular/browser/assets -->
       <p class="text-center text-zinc-400 font-light p-4">
         Parece que ainda não há dados registrados por aqui.

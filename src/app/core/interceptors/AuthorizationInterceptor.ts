@@ -16,6 +16,10 @@ export class AuthorizationInterceptor implements HttpInterceptor {
     '/api/public/ecm/dataset/datasets',
     '/ecm-forms/api/v2/cardindex/',
     '/api/public/2.0/users/getCurrent',
+    '/content-management/api',
+    '/api/public/2.0/documents',
+    '/ecm/upload',
+    '/api/public/2.0/documents/getDownloadURL'
   ];
 
   intercept(
