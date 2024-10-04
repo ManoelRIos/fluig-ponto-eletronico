@@ -19,7 +19,8 @@ export class AuthorizationInterceptor implements HttpInterceptor {
     '/content-management/api',
     '/api/public/2.0/documents',
     '/ecm/upload',
-    '/api/public/2.0/documents/getDownloadURL'
+    '/api/public/2.0/documents/getDownloadURL',
+    '/api/public/2.0/folderdocuments/create',
   ];
 
   intercept(

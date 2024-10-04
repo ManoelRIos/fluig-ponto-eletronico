@@ -17,6 +17,9 @@ import { CurrentUser } from '../../../interfaces';
 import { FormBuilder, FormGroup, FormsModule } from '@angular/forms';
 import { format } from 'date-fns';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { FormularioService } from '../../../services/fluig/formulario.service';
+import { GeocodingService } from '../../../services/google/geocoding.service';
+import { WorldTimeService } from '../../../services/world-time.service';
 
 @Component({
   selector: 'app-dialog-register',
@@ -26,6 +29,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   styleUrl: './dialog-register.component.scss',
 })
 export class DialogRegisterComponent {
+  private formularioService = inject(FormularioService);
+
   data = inject(MAT_DIALOG_DATA);
   private gedService = inject(GedService);
 
@@ -34,16 +39,21 @@ export class DialogRegisterComponent {
   capturedImage!: string;
 
   @Input() currentUser!: CurrentUser;
-
+  currentDate: any;
+  configurations: any;
   cpf: string = '';
   formGroup!: FormGroup;
   WIDTH = 400;
   HEIGHT = 280;
+  folder: any;
+  photo: any;
   private _snackBar = inject(MatSnackBar);
 
   constructor(
     public dialogRef: MatDialogRef<DialogRegisterComponent>,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private geocodingService: GeocodingService,
+    private worldTimeService: WorldTimeService
   ) {}
 
   ngOnInit() {
@@ -55,6 +65,72 @@ export class DialogRegisterComponent {
       .catch((error) => {
         console.error('Erro ao acessar a câmera:', error);
       });
+  }
+
+  getDateTime(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.worldTimeService.getDateTime().subscribe(
+        (response) => {
+          this.currentDate = response;
+          resolve();
+        },
+        (error) => {
+          reject('Erro ao obter a hora:' + error);
+          console.error('Erro ao obter a hora:', error);
+        }
+      );
+    });
+  }
+
+  async postConfigurations(): Promise<void> {
+    await this.getDateTime();
+
+    const now = this.currentDate.datetime;
+    return new Promise(async (resolve) => {
+      let data = [
+        {
+          fieldId: 'datetime',
+          value: now,
+        },
+        {
+          fieldId: 'criado_em',
+          value: format(now, 'yyyy-MM-dd'),
+        },
+
+        {
+          fieldId: 'usuario_nome',
+          value: this.currentUser?.fullName,
+        },
+        {
+          fieldId: 'usuario_codigo',
+          value: this.currentUser?.id,
+        },
+        {
+          fieldId: 'status',
+          value: 'active',
+        },
+        {
+          fieldId: 'codigo_foto',
+          value: this.photo?.content?.id,
+        },
+        {
+          fieldId: 'codigo_pasta',
+          value: this.folder.content.documentId,
+        },
+      ];
+
+      this.formularioService
+        .postData(92035, data)
+        .pipe(first())
+        .subscribe({
+          next: (response) => {
+            console.log(response);
+            this.configurations = response;
+            this.openSnackBar('Foto cadastrada com sucesso!', 'ok');
+            resolve();
+          },
+        });
+    });
   }
 
   async captureImage() {
@@ -84,20 +160,57 @@ export class DialogRegisterComponent {
       this.cpf +
       '.png';
 
-    // fileName = 'manoelrios.png'
-    // Create FormData object
+    let folderData = {
+      parentFolderId: 91793,
+      documentDescription: this.data.currentUser.fullName,
+      versionDescription: 'VersionDescription',
+      expires: 'false',
+      publisherId: this.data.currentUser.code,
+      volumeId: 'Default',
+      inheritSecurity: 'true',
+      downloadEnabled: 'true',
+      updateIsoProperties: 'false',
+      documentTypeId: '1',
+      internalVisualizer: 'true',
+    };
     const formData = new FormData();
     formData.append('image', blob, fileName);
+
+    await this.uploadDocument(formData);
+    
+    if (!this.data.configurations) {
+      await this.postFolder(folderData);
+      await this.postConfigurations();
+    }
+
     const file = {
       description: fileName,
-      parentId: 91793,
+      parentId:
+        this.data.configurations?.codigo_foto ??
+        this.configurations.codigo_foto,
       attachments: [{ fileName: fileName }],
     };
-
-    console.log('formData : ');
-    console.log(formData);
-    await this.uploadDocument(formData);
     this.createDocument(file);
+    let putFormConfig = {
+      values: [
+        {
+          fieldId: 'codigo_foto',
+          value: this.photo?.content?.id,
+        },
+      ],
+    };
+    this.putConfigurations(this.configurations.documentId, putFormConfig);
+  }
+
+  async putConfigurations(documentId: number, data: any) {
+    this.formularioService
+      .putData(92035, documentId, data)
+      .pipe(first())
+      .subscribe({
+        next: (response) => {
+          this.configurations = response;
+        },
+      });
   }
 
   dataURLtoBlob(dataURL: string) {
@@ -107,6 +220,18 @@ export class DialogRegisterComponent {
       bytes[i] = binaryString.charCodeAt(i);
     }
     return new Blob([bytes], { type: 'image/png' });
+  }
+
+  postFolder(folderData: any): Promise<void> {
+    return new Promise(async (resolve) => {
+      this.gedService.postFolder(folderData).subscribe(
+        (response) => {
+          this.folder = response;
+          resolve();
+        },
+        (error) => console.error('Erro ao enviar imagem:', error)
+      );
+    });
   }
 
   uploadDocument(formData: FormData): Promise<void> {
@@ -123,7 +248,9 @@ export class DialogRegisterComponent {
 
   async createDocument(file: any) {
     this.gedService.createDocument(file).subscribe(
-      (response) => console.log('Imagem enviada com sucesso!', response),
+      (response) => {
+        this.photo = response;
+      },
       (error) => console.error('Erro ao enviar imagem:', error)
     );
   }
@@ -144,7 +271,7 @@ export class DialogRegisterComponent {
     this._snackBar.open(message, action, {
       horizontalPosition: 'end',
       verticalPosition: 'top',
-      duration: 1000000,
+      duration: 5000,
       panelClass: ['danger-snackbar'],
     });
   }

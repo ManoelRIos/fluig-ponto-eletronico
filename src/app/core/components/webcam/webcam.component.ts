@@ -102,7 +102,9 @@ export class WebcamComponent {
     this.detectFaces();
   }
   async loadReferenceImage() {
-    const urlImage: any = await this.getDocument('91957');
+    const urlImage: any = await this.getDocument(
+      this.data.configurations.codigo_foto
+    );
     if (!urlImage?.ok) {
       this.openSnackBar(
         'Não foi encontrado sua foto no nosso banco, mas já vamos providenciar! :)',

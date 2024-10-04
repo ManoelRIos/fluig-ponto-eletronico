@@ -27,6 +27,13 @@ export class GedService {
     parentId: string | number;
     attachments: { fileName: string }[];
   }) {
-    return this.httpClient.post(`/api/public/ecm/document/createDocument`, body);
+    return this.httpClient.post(
+      '/api/public/ecm/document/createDocument',
+      body
+    );
+  }
+
+  postFolder(body: any) {
+    return this.httpClient.post('/api/public/2.0/folderdocuments/create', body);
   }
 }

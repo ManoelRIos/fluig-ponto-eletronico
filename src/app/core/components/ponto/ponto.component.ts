@@ -58,6 +58,7 @@ export class PontoComponent {
   hoursWorkedToday: string = '00:00';
   hoursWorkedMonthly: string = '00:00';
 
+  configurations: any;
   currentUser: CurrentUser | null = null;
   users: any = [];
   filteredUsers: any = [];
@@ -88,7 +89,12 @@ export class PontoComponent {
   }
 
   onOpenModalFacialRecognition() {
-    const dialogRef = this.dialog.open(WebcamComponent, {});
+    const dialogRef = this.dialog.open(WebcamComponent, {
+      data: {
+        currentUser: this.currentUser,
+        configurations: this.configurations,
+      },
+    });
 
     dialogRef.afterClosed().subscribe((result) => {
       console.log(result);
@@ -105,6 +111,7 @@ export class PontoComponent {
     const dialogRef = this.dialog.open(DialogRegisterComponent, {
       data: {
         currentUser: this.currentUser,
+        configurations: this.configurations,
       },
     });
 
@@ -117,12 +124,9 @@ export class PontoComponent {
       } else {
         this.openSnackBar('Não foi registrado!', 'Tchau');
       }
-
-      
     });
   }
 
-  
   async recordWorkTime() {
     // Obtém a localização do usuário
     await this.getCurrentLocation();
@@ -355,6 +359,25 @@ export class PontoComponent {
         reject('Geolocalização não é suportada pelo navegador.');
       }
     });
+  }
+
+  getConfigurations(){
+    let constraint: Constraint[] = [];
+    constraint.push(new Constraint('codigo_usuario', this.currentUser?.id));
+
+    this.formularioService
+      .getData('configRegistroPonto', constraint)
+      .pipe(first())
+      .subscribe({
+        next: (response) => {
+          if (response.length) {            
+            this.configurations = response[0];
+          }
+        },
+        error: (ex) => {
+          Swal.fire({ icon: 'error', title: 'Oops...', html: ex });
+        },
+      });
   }
 
   getAddress(): Promise<void> {
