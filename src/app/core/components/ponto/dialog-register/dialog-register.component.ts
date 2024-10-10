@@ -121,16 +121,16 @@ export class DialogRegisterComponent {
       };
 
       await this.createDocument(file);
-      let putFormConfig = [
-        {
-          fieldId: 'codigo_foto',
-          value: this.photo?.content?.id,
-        },
-      ];
-      this.putConfigurations(
-        this.data.configurations?.documentid,
-        putFormConfig
-      );
+      // let putFormConfig = [
+      //   {
+      //     fieldId: 'codigo_foto',
+      //     value: this.photo?.content?.id,
+      //   },
+      // ];
+      // this.putConfigurations(
+      //   this.data.configurations?.documentid,
+      //   putFormConfig
+      // );
       resolve();
     });
   }

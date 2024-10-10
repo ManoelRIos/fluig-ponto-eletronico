@@ -63,6 +63,8 @@
           ><i class="flaticon flaticon-date-range icon-sm text-slate-700" aria-hidden="true"></i
         ></span>
         <input
+          (blur)="getAllWorkRecords()"
+          [(ngModel)]="startDateQuery"
           id="dateStart"
           type="text"
           class="form-control border-slate-200 text-slate-700 placeholder:text-slate-400 rounded-r-lg"
@@ -77,6 +79,8 @@
           ><i class="flaticon flaticon-date-range icon-sm text-slate-700" aria-hidden="true"></i
         ></span>
         <input
+          (input)="getAllWorkRecords()"
+          [(ngModel)]="endDateQuery"
           id="dateEnd"
           type="text"
           class="form-control border-slate-200 placeholder:text-slate-400 rounded-r-lg"
@@ -92,6 +96,7 @@
         ></span>
         <input
           type="text"
+          (blur)="getAllWorkRecords()"
           (input)="filterUsers()"
           [(ngModel)]="userSearchQuery"
           [matAutocomplete]="users"
@@ -106,7 +111,6 @@
       </div>
     </div>
   </div>
-
 
   <div class="bg-zinc-50 relative overflow-x-auto shadow-md sm:rounded-lg">
     <table class="w-full text-sm text-left rtl:text-right text-slate-50 overflow-auto">
@@ -124,7 +128,7 @@
         @for (work of workRecords; track work.id) {
         <tr [class]="work.status === 'refused' ? 'line-through text-rose-600' : ''">
           <td class="px-6 py-4 font-medium text-slate-900 whitespace-nowrap">
-            {{ format(work.criado_em, 'dd/MM/yyyy') }}
+            {{ format(work.datetime, 'dd/MM/yyyy') }}
           </td>
           <td class="px-6 py-4">{{ work.usuario_nome }}</td>
           <td class="px-6 py-4">{{ work.dia_semana }}</td>

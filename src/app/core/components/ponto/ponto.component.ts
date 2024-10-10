@@ -36,6 +36,7 @@ import { DataValues } from '../../interfaces/data-values.interface'
 
 import { NgxPrintService } from 'ngx-print'
 import { ConfigurationWorkRecord } from '../../models/ConfigurationWorkRecord'
+import { User } from '../../models/User'
 
 @Component({
   selector: 'app-ponto',
@@ -63,6 +64,9 @@ export class PontoComponent implements OnInit {
   private gedService = inject(GedService)
   public environment = environment
   public format = format
+  userIdSearchQuery: any
+  startDateQuery: string = format(new Date(), 'dd/MM/yyyy')
+  endDateQuery: string = format(new Date(), 'dd/MM/yyyy')
   observation: string = ''
   latitude: number = 0
   longitude: number = 0
@@ -79,8 +83,8 @@ export class PontoComponent implements OnInit {
   hoursWorkedToday: string = '00:00'
   hoursWorkedMonthly: string = '00:00'
   configurations: any
-  currentUser: CurrentUser | null = null
-  users: any = []
+  currentUser!: CurrentUser
+  users: User[] = []
   filteredUsers: any = []
   userSearchQuery: string = ''
   cpf: string = ''
@@ -107,7 +111,9 @@ export class PontoComponent implements OnInit {
     //     this.workRecords[this.workRecords.length - 1]?.datetime,
     //     'dd/MM/yyyy'
     //   );
+
     loadFluigCalendar(['#dateStart', '#dateEnd'])
+
     if (!this.configurations || this.configurations?.length === 0) {
       let folderData = {
         parentFolderId: 140903,
@@ -381,7 +387,7 @@ export class PontoComponent implements OnInit {
         .postData(91586, data)
         .pipe(first())
         .subscribe({
-          next: (response) => {
+          next: async (response) => {
             this.currentWorkRecord = response
 
             this.getAllWorkRecords()
@@ -425,6 +431,14 @@ export class PontoComponent implements OnInit {
 
   async getAllWorkRecords(constraint: Constraint[] = []): Promise<void> {
     // constraint.push(new Constraint('usuario_codigo', this.currentUser?.id));
+    console.log(this.startDateQuery)
+    constraint.push(
+      new Constraint('criado_em', format(this.startDateQuery, 'yyyy-MM-dd'), format(this.endDateQuery, 'yyyy-MM-dd')),
+    )
+
+    console.log(this.userIdSearchQuery)
+    if (this.userIdSearchQuery) constraint.push(new Constraint('usuario_codigo', this.userIdSearchQuery))
+
     return new Promise((resolve) => {
       this.formularioService
         .getData('pontoRegistro', constraint)
@@ -669,6 +683,7 @@ export class PontoComponent implements OnInit {
     )}</p>
         <p>LOCAL: ${this.currentWorkRecord.localidade.toUpperCase()}</p>        
         <p>OBS: ${this.currentWorkRecord.observacao.toUpperCase()}</p>
+        <p>STATUS: ${this.getStatus(this.currentWorkRecord.observacao).toUpperCase()}</p>
       </div>`)
 
     printScreen.window.print()

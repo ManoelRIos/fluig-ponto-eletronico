@@ -50,17 +50,13 @@ export class WebcamComponent {
   videoInput: any
 
   async ngOnInit() {
-    try {
-      await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri(`${environment.assets}/models`),
-        faceapi.nets.faceLandmark68Net.loadFromUri(`${environment.assets}/models`),
-        faceapi.nets.faceRecognitionNet.loadFromUri(`${environment.assets}/models`),
-        faceapi.nets.faceExpressionNet.loadFromUri(`${environment.assets}/models`),
-        faceapi.nets.ssdMobilenetv1.loadFromUri(`${environment.assets}/models`),
-      ])
-    } catch {
-      
-    }
+    await Promise.all([
+      faceapi.nets.tinyFaceDetector.loadFromUri(`${environment.assets}/models`),
+      faceapi.nets.faceLandmark68Net.loadFromUri(`${environment.assets}/models`),
+      faceapi.nets.faceRecognitionNet.loadFromUri(`${environment.assets}/models`),
+      faceapi.nets.faceExpressionNet.loadFromUri(`${environment.assets}/models`),
+      faceapi.nets.ssdMobilenetv1.loadFromUri(`${environment.assets}/models`),
+    ])
 
     this.startVideo()
   }
