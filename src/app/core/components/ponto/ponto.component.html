@@ -1,17 +1,12 @@
 <div class="flex flex-wrap justify-between gap-8">
   <div class="flex items-center gap-2 w-96">
     <div class="bg-amber-400 p-1 rounded-lg">
-      <i
-        class="text-slate-800 flaticon flaticon-alarm icon-md"
-        aria-hidden="true"
-      ></i>
+      <i class="text-slate-800 flaticon flaticon-alarm icon-md" aria-hidden="true"></i>
     </div>
     <h2 class="text-slate-700 font-bold m-0">
-      Bem-vindo, {{ currentUser?.firstName }}! Seu Ponto Eletrônico está pronto
-      para você.
+      Bem-vindo, {{ currentUser?.firstName }}! Seu Ponto Eletrônico está pronto para você.
     </h2>
   </div>
-  <!-- (click)="recordWorkTime()" -->
   <div class="flex flex-wrap items-center gap-4">
     <button
       (click)="onOpenModalFacialRecognition()"
@@ -22,10 +17,7 @@
     </button>
 
     <div class="bg-slate-50 shadow rounded-lg p-2">
-      <i
-        class="px-2 flaticon flaticon-multiple-register icon-sm"
-        aria-hidden="true"
-      ></i>
+      <i class="px-2 flaticon flaticon-multiple-register icon-sm" aria-hidden="true"></i>
       <strong>Ultimo registro: </strong> <span> {{ lastRegister }}</span>
     </div>
   </div>
@@ -34,12 +26,7 @@
   <div class="bg-slate-50 rounded h-40 w-96 gap-2 shadow-sm">
     <div class="flex flex-col items-start justify-center gap-2 p-8 h-full">
       <h3 class="text-slate-700 flex items-center gap-2">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          class="size-6 text-amber-900"
-        >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 text-amber-900">
           <path
             fill-rule="evenodd"
             d="M7.5 5.25a3 3 0 0 1 3-3h3a3 3 0 0 1 3 3v.205c.933.085 1.857.197 2.774.334 1.454.218 2.476 1.483 2.476 2.917v3.033c0 1.211-.734 2.352-1.936 2.752A24.726 24.726 0 0 1 12 15.75c-2.73 0-5.357-.442-7.814-1.259-1.202-.4-1.936-1.541-1.936-2.752V8.706c0-1.434 1.022-2.7 2.476-2.917A48.814 48.814 0 0 1 7.5 5.455V5.25Zm7.5 0v.09a49.488 49.488 0 0 0-6 0v-.09a1.5 1.5 0 0 1 1.5-1.5h3a1.5 1.5 0 0 1 1.5 1.5Zm-3 8.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
@@ -54,32 +41,17 @@
       <div class="flex items-center justify-between gap-4 w-full">
         <div>
           <span>Hoje</span>
-          <p class="font-bold text-xl text-slate-700">
-            {{ hoursWorkedToday }} h
-          </p>
+          <p class="font-bold text-xl text-slate-700">{{ hoursWorkedToday }} h</p>
         </div>
         <div class="h-12 border-l border-gray-300"></div>
         <div>
           <span>Mês</span>
-          <p class="font-bold text-xl text-slate-700">
-            {{ hoursWorkedMonthly }} h
-          </p>
+          <p class="font-bold text-xl text-slate-700">{{ hoursWorkedMonthly }} h</p>
         </div>
       </div>
     </div>
   </div>
-  <!-- <img
-    id="clock-in-img"
-    class="w-60"
-    src="/wgt_ponto_eletronico/resources/js/app-angular/browser/assets/clock-in.svg"
-    alt="Clock-in"
-  /> -->
-  <img
-    id="clock-in-img"
-    class="w-60"
-    src="/assets/clock-in.svg"
-    alt="Clock-in"
-  />
+  <img id="clock-in-img" class="w-60" src="{{ environment.assets }}/clock-in.svg" alt="Clock-in" />
 </div>
 
 <div class="pt-8">
@@ -88,10 +60,7 @@
       <label for="user" class="sr-only">Data Início</label>
       <div class="input-group">
         <span class="input-group-addon bg-slate-200 border-slate-200"
-          ><i
-            class="flaticon flaticon-date-range icon-sm text-slate-700"
-            aria-hidden="true"
-          ></i
+          ><i class="flaticon flaticon-date-range icon-sm text-slate-700" aria-hidden="true"></i
         ></span>
         <input
           id="dateStart"
@@ -105,10 +74,7 @@
       <label for="user" class="sr-only">Data fim</label>
       <div class="input-group">
         <span class="input-group-addon bg-slate-200 border-slate-200"
-          ><i
-            class="flaticon flaticon-date-range icon-sm text-slate-700"
-            aria-hidden="true"
-          ></i
+          ><i class="flaticon flaticon-date-range icon-sm text-slate-700" aria-hidden="true"></i
         ></span>
         <input
           id="dateEnd"
@@ -122,10 +88,7 @@
       <label for="user" class="sr-only">Usuário</label>
       <div class="input-group">
         <span class="input-group-addon bg-slate-200 border-slate-200"
-          ><i
-            class="flaticon flaticon-account-circle icon-sm text-slate-700"
-            aria-hidden="true"
-          ></i
+          ><i class="flaticon flaticon-account-circle icon-sm text-slate-700" aria-hidden="true"></i
         ></span>
         <input
           type="text"
@@ -135,55 +98,79 @@
           class="form-control border-slate-200 placeholder:text-slate-400 rounded-r-lg"
           placeholder="Funcionário"
         />
-        <mat-autocomplete #users="matAutocomplete">
+        <mat-autocomplete #users="matAutocomplete" class="bg-amber-50">
           @for (user of filteredUsers; track user) {
-          <mat-option [value]="user.colleagueName">{{
-            user.colleagueName
-          }}</mat-option>
+          <mat-option [value]="user.colleagueName">{{ user.colleagueName }}</mat-option>
           }
         </mat-autocomplete>
       </div>
     </div>
   </div>
+
+
   <div class="bg-zinc-50 relative overflow-x-auto shadow-md sm:rounded-lg">
-    <table class="w-full text-sm text-left rtl:text-right text-slate-50">
+    <table class="w-full text-sm text-left rtl:text-right text-slate-50 overflow-auto">
       <thead class="text-xs text-slate-700 uppercase bg-amber-100">
         <tr>
           <th scope="col" class="px-6 py-3">Data</th>
           <th scope="col" class="px-6 py-3">Usuário</th>
           <th scope="col" class="px-6 py-3">Dia</th>
           <th scope="col" class="px-6 py-3">Horário</th>
+          <th scope="col" class="px-6 py-3">Status</th>
           <th scope="col" class="px-6 py-3">Ações</th>
         </tr>
       </thead>
-      <tbody *ngFor="let work of workRecords">
-        <tr class="bg-white border-b hover:bg-amber-50">
+      <tbody>
+        @for (work of workRecords; track work.id) {
+        <tr [class]="work.status === 'refused' ? 'line-through text-rose-600' : ''">
           <td class="px-6 py-4 font-medium text-slate-900 whitespace-nowrap">
-            {{ work.criado_em }}
+            {{ format(work.criado_em, 'dd/MM/yyyy') }}
           </td>
           <td class="px-6 py-4">{{ work.usuario_nome }}</td>
           <td class="px-6 py-4">{{ work.dia_semana }}</td>
           <td class="px-6 py-4">{{ work.horario_registro }}</td>
-          <td class="flex items-center px-6 py-4" title="Emitir comprovante">
-            <a href="#" class="font-medium text-yellow-600 hover:underline">
-              <i
-                class="flaticon flaticon-log-download icon-md"
-                aria-hidden="true"
-              ></i>
+          <td class="px-6 py-4 text-center">
+            <span
+              [class]="getWorkRecordClasses(work.status)"
+              class="border text-xs font-medium me-2 px-2.5 py-0.5 rounded-lg"
+              >{{ getStatus(work.status) }}</span
+            >
+          </td>
+          <td class="flex items-center gap-2 px-6 py-4">
+            <a [matMenuTriggerFor]="workactions" class="font-medium text-slate-500 hover:underline">
+              <i class="flaticon flaticon-more-vert icon-md" aria-hidden="true"></i>
             </a>
+            <mat-menu #workactions="matMenu" class="bg-amber-50">
+              <button
+                type="button"
+                mat-menu-item
+                (click)="viewWorkRecord(work.documentid)"
+                class="flex items-center gap-4 font-medium text-slate-600 hover:underline cursor-pointer"
+              >
+                <i class="pr-4 flaticon flaticon-view icon-sm" aria-hidden="true"></i>
+                <span>Abrir</span>
+              </button>
+              <button
+                type="button"
+                mat-menu-item
+                (click)="generateReceipt(work.documentid)"
+                class="flex items-center gap-4 font-medium text-slate-600 hover:underline cursor-pointer"
+              >
+                <i class="pr-4 flaticon flaticon-log-download icon-sm" aria-hidden="true"></i>
+
+                <span>Emitir comprovante</span>
+              </button>
+            </mat-menu>
           </td>
         </tr>
+        }
       </tbody>
     </table>
-    <div
-      *ngIf="workRecords.length === 0"
-      class="w-full flex flex-col items-center justify-center p-4 gap-4"
-    >
-      <img class="w-36" src="/assets/not-found.svg" alt="Blank Canva" />
-      <!-- /wgt_ponto_eletronico/resources/js/app-angular/browser/assets -->
-      <p class="text-center text-zinc-400 font-light p-4">
-        Parece que ainda não há dados registrados por aqui.
-      </p>
+    @if (workRecords.length === 0){
+    <div class="w-full flex flex-col items-center justify-center p-4 gap-4">
+      <img class="w-36" src="{{ environment.assets }}/not-found.svg" alt="Blank Canva" />
+      <p class="text-center text-zinc-400 font-light p-4">Parece que ainda não há dados registrados por aqui.</p>
     </div>
+    }
   </div>
 </div>

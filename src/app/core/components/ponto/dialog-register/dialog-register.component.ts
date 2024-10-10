@@ -30,9 +30,9 @@ import { WorldTimeService } from '../../../services/world-time.service';
 })
 export class DialogRegisterComponent {
   private formularioService = inject(FormularioService);
+  private gedService = inject(GedService);
 
   data = inject(MAT_DIALOG_DATA);
-  private gedService = inject(GedService);
 
   @ViewChild('video') videoElement!: ElementRef;
   @ViewChild('canvas') canvasElement!: ElementRef;
@@ -40,7 +40,6 @@ export class DialogRegisterComponent {
 
   @Input() currentUser!: CurrentUser;
   currentDate: any;
-  configurations: any;
   cpf: string = '';
   formGroup!: FormGroup;
   WIDTH = 400;
@@ -82,133 +81,67 @@ export class DialogRegisterComponent {
     });
   }
 
-  async postConfigurations(): Promise<void> {
-    await this.getDateTime();
-
-    const now = this.currentDate.datetime;
+  async captureImage(): Promise<void> {
     return new Promise(async (resolve) => {
-      let data = [
-        {
-          fieldId: 'datetime',
-          value: now,
-        },
-        {
-          fieldId: 'criado_em',
-          value: format(now, 'yyyy-MM-dd'),
-        },
+      if (!this.cpf) {
+        this.openSnackBar('O CPF é obrigatório', '');
+        return;
+      }
 
-        {
-          fieldId: 'usuario_nome',
-          value: this.currentUser?.fullName,
-        },
-        {
-          fieldId: 'usuario_codigo',
-          value: this.currentUser?.id,
-        },
-        {
-          fieldId: 'status',
-          value: 'active',
-        },
+      const canvas = this.canvasElement.nativeElement;
+      const video = this.videoElement.nativeElement;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      this.capturedImage = canvas.toDataURL('image/png');
+      // Convert data URL to Blob
+      console.log(this.capturedImage);
+      const blob = this.dataURLtoBlob(this.capturedImage);
+
+      console.log(this.data);
+      let fileName =
+        format(new Date(), 'yyyyMMddHHmm') +
+        '_' +
+        this.data.currentUser.code +
+        '_' +
+        this.cpf +
+        '.png';
+
+      const formData = new FormData();
+      formData.append('image', blob, fileName);
+
+      await this.uploadDocument(formData);
+
+      const file = {
+        description: fileName,
+        parentId: this.data.configurations?.codigo_pasta,
+        attachments: [{ fileName: fileName }],
+      };
+
+      await this.createDocument(file);
+      let putFormConfig = [
         {
           fieldId: 'codigo_foto',
           value: this.photo?.content?.id,
-        },
-        {
-          fieldId: 'codigo_pasta',
-          value: this.folder.content.documentId,
         },
       ];
-
-      this.formularioService
-        .postData(92035, data)
-        .pipe(first())
-        .subscribe({
-          next: (response) => {
-            console.log(response);
-            this.configurations = response;
-            this.openSnackBar('Foto cadastrada com sucesso!', 'ok');
-            resolve();
-          },
-        });
+      this.putConfigurations(
+        this.data.configurations?.documentid,
+        putFormConfig
+      );
+      resolve();
     });
-  }
-
-  async captureImage() {
-    if (!this.cpf) {
-      this.openSnackBar('O CPF é obrigatório', '');
-      return;
-    }
-
-    const canvas = this.canvasElement.nativeElement;
-    const video = this.videoElement.nativeElement;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    const context = canvas.getContext('2d');
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    this.capturedImage = canvas.toDataURL('image/png');
-    // Convert data URL to Blob
-    console.log(this.capturedImage);
-    const blob = this.dataURLtoBlob(this.capturedImage);
-
-    console.log(this.data);
-    let fileName =
-      format(new Date(), 'yyyyMMddHHmm') +
-      '_' +
-      this.data.currentUser.code +
-      '_' +
-      this.cpf +
-      '.png';
-
-    let folderData = {
-      parentFolderId: 91793,
-      documentDescription: this.data.currentUser.fullName,
-      versionDescription: 'VersionDescription',
-      expires: 'false',
-      publisherId: this.data.currentUser.code,
-      volumeId: 'Default',
-      inheritSecurity: 'true',
-      downloadEnabled: 'true',
-      updateIsoProperties: 'false',
-      documentTypeId: '1',
-      internalVisualizer: 'true',
-    };
-    const formData = new FormData();
-    formData.append('image', blob, fileName);
-
-    await this.uploadDocument(formData);
-    
-    if (!this.data.configurations) {
-      await this.postFolder(folderData);
-      await this.postConfigurations();
-    }
-
-    const file = {
-      description: fileName,
-      parentId:
-        this.data.configurations?.codigo_foto ??
-        this.configurations.codigo_foto,
-      attachments: [{ fileName: fileName }],
-    };
-    this.createDocument(file);
-    let putFormConfig = {
-      values: [
-        {
-          fieldId: 'codigo_foto',
-          value: this.photo?.content?.id,
-        },
-      ],
-    };
-    this.putConfigurations(this.configurations.documentId, putFormConfig);
   }
 
   async putConfigurations(documentId: number, data: any) {
     this.formularioService
-      .putData(92035, documentId, data)
+      .putData(140900, documentId, data)
       .pipe(first())
       .subscribe({
         next: (response) => {
-          this.configurations = response;
+          this.data.configurations = response;
         },
       });
   }
@@ -220,18 +153,6 @@ export class DialogRegisterComponent {
       bytes[i] = binaryString.charCodeAt(i);
     }
     return new Blob([bytes], { type: 'image/png' });
-  }
-
-  postFolder(folderData: any): Promise<void> {
-    return new Promise(async (resolve) => {
-      this.gedService.postFolder(folderData).subscribe(
-        (response) => {
-          this.folder = response;
-          resolve();
-        },
-        (error) => console.error('Erro ao enviar imagem:', error)
-      );
-    });
   }
 
   uploadDocument(formData: FormData): Promise<void> {
@@ -246,24 +167,37 @@ export class DialogRegisterComponent {
     });
   }
 
-  async createDocument(file: any) {
-    this.gedService.createDocument(file).subscribe(
-      (response) => {
-        this.photo = response;
-      },
-      (error) => console.error('Erro ao enviar imagem:', error)
-    );
+  async createDocument(file: any): Promise<void> {
+    return new Promise(async (resolve) => {
+      this.gedService.createDocument(file).subscribe(
+        (response) => {
+          this.photo = response;
+          resolve();
+        },
+        (error) => console.error('Erro ao enviar imagem:', error)
+      );
+    });
   }
 
   cancel() {
     this.stopCamera();
     this.dialogRef.close(false);
   }
-  accept() {
-    this.captureImage();
-    this.stopCamera();
-    if (this.cpf) {
-      this.dialogRef.close(this.cpf);
+  async accept() {
+    try {
+      // Await both image capture and camera stop in parallel
+      await Promise.all([this.captureImage(), this.stopCamera()]);
+
+      if (this.cpf) {
+        this.dialogRef.close({
+          photo: this.photo,
+          cpf: this.cpf,
+          configurations: this.data.configurations,
+        });
+      }
+    } catch (error) {
+      console.error('Error during capture or camera stop:', error);
+      // Handle errors appropriately (e.g., display an error message)
     }
   }
 

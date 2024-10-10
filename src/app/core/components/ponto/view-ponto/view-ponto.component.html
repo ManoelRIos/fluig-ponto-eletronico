@@ -1,0 +1,37 @@
+<div mat-dialog-content class="p-8 flex flex-col items-center justify-center gap-4">
+  <div class="flex items-center justify-between gap-4 w-full">
+    <h3>{{ data.workRecord.documentid }} - {{ data.workRecord.usuario_nome }}</h3>
+    <button mat-button class="text-slate-400" (click)="close()">
+      <i class="flaticon flaticon-close icon-md" aria-hidden="true"></i>
+    </button>
+  </div>
+  <div>
+    <p>{{ data.workRecord.datetime }}</p>
+    <p>{{ data.workRecord.localidade }}</p>
+    <p>{{ data.workRecord.observacao }}</p>
+    <img class="rounded-lg" src="{{ photo }}" alt="" />
+  </div>
+</div>
+
+<mat-dialog-actions class="flex items-center justify-between gap-4">
+  @if (data.workRecord.status === 'pending'){
+  <div class="flex items-center gap-2">
+    <button
+      mat-button
+      class="flex items-center gap-2 py-1 px-4 rounded text-emerald-600 bg-emerald-200 shadow-sm hover:outline-emerald-50"
+      (click)="close('approved')"
+    >
+      <i class="flaticon flaticon-check-circle icon-sm" aria-hidden="true"></i>
+      <span>Aprovar</span>
+    </button>
+    <button
+      mat-button
+      class="flex items-center gap-2 py-1 px-4 rounded text-rose-600 bg-rose-200 shadow-sm hover:outline-rose-50"
+      (click)="close('refused')"
+    >
+      <i class="flaticon flaticon-cancel icon-sm" aria-hidden="true"></i>
+      <span>Recusar</span>
+    </button>
+  </div>
+  }
+</mat-dialog-actions>

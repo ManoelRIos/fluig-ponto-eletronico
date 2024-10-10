@@ -5,7 +5,7 @@ import { BaseService } from '../base.service';
 import { DatasetResponse } from '../../interfaces';
 import { Constraint } from '../../models/constraint.model';
 import { DataValues } from '../../interfaces/data-values.interface';
-import { Values } from '../../interfaces/work-record';
+import { WorkRecord } from '../../models/WorkRecord';
 
 @Injectable({
   providedIn: 'root',
@@ -36,14 +36,14 @@ export class FormularioService extends BaseService {
   public postData(documentId: number, dataValues: DataValues[]) {
     const body = { values: dataValues };
     return this.httpClient
-      .post<Values>(`/ecm-forms/api/v2/cardindex/${documentId}/cards`, body)
+      .post<WorkRecord>(`/ecm-forms/api/v2/cardindex/${documentId}/cards`, body)
       .pipe(first());
   }
 
   public putData(documentId: number, cardId: number, dataValues: DataValues[]) {
     const body = { values: dataValues };
     return this.httpClient
-      .put<Values>(
+      .put<WorkRecord>(
         `/ecm-forms/api/v2/cardindex/${documentId}/cards/${cardId}`,
         body
       )
