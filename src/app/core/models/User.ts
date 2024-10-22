@@ -1,12 +1,19 @@
+import { Role } from './Role'
+
 export interface User {
-  code: string;
-  email: string;
-  firstName: string;
-  fullName: string;
-  groups: [];
-  lastName: string;
-  login: string;
-  roles: [];
-  tenantCode: string;
-  tenantId: number;
+  code: string
+  mail: string
+  firstName: string
+  fullName: string
+  colleagueName: string
+  groups: []
+  lastName: string
+  login: string
+  roles: []
+  tenantCode: string
+  tenantId: number
+  userTenantId: number
+  extensionNr: string
+  especializationArea: string
+  profile: Role | any
 }

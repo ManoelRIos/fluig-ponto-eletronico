@@ -1,11 +1,12 @@
 import { Component, EventEmitter, inject, Output } from '@angular/core'
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogActions, MatDialogContent } from '@angular/material/dialog'
-import { GedService } from '../../../services/fluig/ged.service'
+import { GedService } from '../../../../services/fluig/ged.service'
 import { first } from 'rxjs'
+import { NgIf } from '@angular/common'
 @Component({
   selector: 'app-view-ponto',
   standalone: true,
-  imports: [MatDialogActions, MatDialogContent],
+  imports: [MatDialogActions, MatDialogContent, NgIf],
   templateUrl: './view-ponto.component.html',
   styleUrl: './view-ponto.component.scss',
 })

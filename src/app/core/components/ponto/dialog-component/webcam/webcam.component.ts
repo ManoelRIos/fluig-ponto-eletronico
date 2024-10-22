@@ -1,12 +1,12 @@
 import { NgClass, NgIf } from '@angular/common'
-import { environment } from '../../../../../environments/environment'
+import { environment } from '../../../../../../environments/environment'
 
 import { Component, ElementRef, EventEmitter, inject, Inject, Output, ViewChild } from '@angular/core'
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog'
 import * as faceapi from 'face-api.js'
 import { first } from 'rxjs'
 import Swal from 'sweetalert2'
-import { GedService } from '../../../services/fluig/ged.service'
+import { GedService } from '../../../../services/fluig/ged.service'
 import { MatSnackBar } from '@angular/material/snack-bar'
 declare const navigator: any
 
@@ -58,7 +58,8 @@ export class WebcamComponent {
       faceapi.nets.ssdMobilenetv1.loadFromUri(`${environment.assets}/models`),
     ])
 
-    this.startVideo()
+    await this.startVideo()
+    this.detectFaces()
   }
 
   getDocument(documentId: string): Promise<{ content: string }> {
@@ -77,17 +78,19 @@ export class WebcamComponent {
     })
   }
 
-  startVideo() {
-    this.videoInput = this.video?.nativeElement
-    navigator.getUserMedia(
-      { video: {}, audio: false },
-      (stream: any) => (this.videoInput.srcObject = stream),
-      (err: any) => console.log(err),
-    )
-    this.detectFaces()
+  async startVideo(): Promise<void> {
+    return await new Promise((resolve) => {
+      this.videoInput = this.video?.nativeElement
+      navigator.getUserMedia(
+        { video: {}, audio: false },
+        (stream: any) => (this.videoInput.srcObject = stream),
+        (err: any) => console.log(err),
+      )
+      resolve()
+    })
   }
   async loadReferenceImage() {
-    const urlImage: any = await this.getDocument(this.data.configurations?.codigo_foto)
+    const urlImage: any = this.data.configurations?.codigo_foto ? await this.getDocument(this.data.configurations?.codigo_foto) : null
     if (!urlImage?.content) {
       this.openSnackBar('Não foi encontrado sua foto no nosso banco, mas já vamos providenciar! :)', '', '', 'center')
       this.referenceMatch = false
@@ -111,8 +114,8 @@ export class WebcamComponent {
       this.stopCamera()
       return
     }
+
     const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.6)
-    console.log(faceMatcher)
 
     let counterReference = 0
     let seconds = 0

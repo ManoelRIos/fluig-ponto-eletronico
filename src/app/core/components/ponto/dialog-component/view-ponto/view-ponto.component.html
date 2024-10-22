@@ -1,0 +1,67 @@
+<div mat-dialog-content class="p-8 flex flex-col items-center justify-center gap-4">
+  <div class="flex items-center justify-between gap-4 w-full">
+    <h3>{{ data.workRecord.documentid }} - {{ data.workRecord.usuario_nome }}</h3>
+    <button mat-button class="text-zinc-400" (click)="close()">
+      <i class="flaticon flaticon-close icon-md" aria-hidden="true"></i>
+    </button>
+  </div>
+  <div>
+    <p>{{ data.workRecord.datetime }}</p>
+    <p>{{ data.workRecord.localidade }}</p>
+    <p>{{ data.workRecord.observacao }}</p>
+    <img class="rounded-lg" src="{{ photo }}" alt="" />
+  </div>
+</div>
+
+<mat-dialog-actions class="flex items-center justify-between gap-4">
+  @if (data.workRecord.status === 'pending'){
+  <div class="flex items-center gap-2">
+    <button
+      *ngIf="data.profile.approve === 'true'"
+      mat-button
+      class="hover:drop-shadow-md ease-out duration-200 flex items-center gap-2 py-1 px-4 rounded text-emerald-600 bg-emerald-200 shadow-sm hover:outline-emerald-50"
+      (click)="close('approved')"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+        class="size-6"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+        />
+      </svg>
+
+      <span>Aprovar</span>
+    </button>
+    <button
+      *ngIf="data.profile.approve === 'true'"
+      mat-button
+      class="hover:drop-shadow-md ease-out duration-200 flex items-center gap-2 py-1 px-4 rounded text-rose-600 bg-rose-200 shadow-sm hover:outline-rose-50"
+      (click)="close('refused')"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+        class="size-6"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+        />
+      </svg>
+
+      <span>Recusar</span>
+    </button>
+  </div>
+  }
+</mat-dialog-actions>

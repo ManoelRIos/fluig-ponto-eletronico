@@ -1,4 +1,4 @@
-import { WebcamComponent } from './webcam/webcam.component'
+import { WebcamComponent } from './dialog-component/webcam/webcam.component'
 import { WorldTimeService } from './../../services/world-time.service'
 import { NgClass, NgFor, NgIf } from '@angular/common'
 import { Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core'
@@ -7,14 +7,14 @@ import { GeocodingService } from '../../services/google/geocoding.service'
 import { Constraint } from '../../models/constraint.model'
 import { FormularioService } from '../../services/fluig/formulario.service'
 import { CurrentUserService } from '../../services/fluig/currentUser.service'
-import { first, interval } from 'rxjs'
+import { first } from 'rxjs'
 import { MatAutocompleteModule } from '@angular/material/autocomplete'
 import { FormsModule } from '@angular/forms'
 import { CurrentUser } from '../../interfaces'
 import loadFluigCalendar from '../../utils/loadFluigCalendar'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { calculateTotalHours, distanceCalculate } from '../../utils/utils'
+import { calculateTotalHours, distanceCalculate, getStatusWorkRecord, getWorkRecordClasses } from '../../utils/utils'
 
 import { MatDialog, MatDialogModule } from '@angular/material/dialog'
 import { MatSnackBar } from '@angular/material/snack-bar'
@@ -25,18 +25,19 @@ import { MatSelectModule } from '@angular/material/select'
 import { MatMenuModule } from '@angular/material/menu'
 
 import { MatFormFieldModule } from '@angular/material/form-field'
-import { DialogRegisterComponent } from './dialog-register/dialog-register.component'
+import { DialogRegisterComponent } from './dialog-component/dialog-register/dialog-register.component'
 import { GedService } from '../../services/fluig/ged.service'
-import { ViewPontoComponent } from './view-ponto/view-ponto.component'
-import { WorkRecord } from '../../models/WorkRecord'
+import { ViewPontoComponent } from './dialog-component/view-ponto/view-ponto.component'
+import { WorkRecord, WorkStatus } from '../../models/WorkRecord'
 
 import { NgIconComponent, provideIcons } from '@ng-icons/core'
 import { heroUsers } from '@ng-icons/heroicons/outline'
 import { DataValues } from '../../interfaces/data-values.interface'
 
-import { NgxPrintService } from 'ngx-print'
 import { ConfigurationWorkRecord } from '../../models/ConfigurationWorkRecord'
 import { User } from '../../models/User'
+import { RouterLink } from '@angular/router'
+import { Role } from '../../models/Role'
 
 @Component({
   selector: 'app-ponto',
@@ -52,6 +53,8 @@ import { User } from '../../models/User'
     MatDialogModule,
     NgClass,
     NgIconComponent,
+    NgIf,
+    RouterLink,
   ],
   templateUrl: './ponto.component.html',
   styleUrl: './ponto.component.scss',
@@ -64,9 +67,10 @@ export class PontoComponent implements OnInit {
   private gedService = inject(GedService)
   public environment = environment
   public format = format
+  public utils = { getStatusWorkRecord: getStatusWorkRecord, getWorkRecordClasses: getWorkRecordClasses }
+
+  profile!: Role
   userIdSearchQuery: any
-  startDateQuery: string = format(new Date(), 'dd/MM/yyyy')
-  endDateQuery: string = format(new Date(), 'dd/MM/yyyy')
   observation: string = ''
   latitude: number = 0
   longitude: number = 0
@@ -74,49 +78,46 @@ export class PontoComponent implements OnInit {
   folder: any
   photo: any
   currentAddress: any
-  workRecords: any = []
+  workRecords: WorkRecord[] = []
+  filteredWorkRecords: WorkRecord[] = []
   currentWorkRecord!: WorkRecord
-  dailyWorkedHours: number = 0
-  monthlyWorkedHours: number = 0
   currentDate: any
   lastRegister: string = '  00:00:00 - _/_/_'
   hoursWorkedToday: string = '00:00'
   hoursWorkedMonthly: string = '00:00'
-  configurations: any
+  configurations: ConfigurationWorkRecord | null = null
   currentUser!: CurrentUser
   users: User[] = []
-  filteredUsers: any = []
-  userSearchQuery: string = ''
+  filteredUsers: User[] = []
+  searchQuery: string = ''
   cpf: string = ''
+
   constructor(
     private geocodingService: GeocodingService,
     private worldTimeService: WorldTimeService,
     public dialog: MatDialog,
-    private printService: NgxPrintService,
   ) {}
 
   @ViewChild('printSection') printSection!: ElementRef
   @ViewChild('webcamRef') webcamComponent!: WebcamComponent
 
   async ngOnInit() {
-    await this.getDateTime()
+    // await this.getDateTime()
+    this.currentDate = { datetime: new Date().toISOString() }
+
     await this.geCurrentUser()
-    await this.getUsers()
+    this.currentUserService.currentUser = this.currentUser
+    await this.getProfile()
+    console.log(this.profile)
+    if (this.profile?.view_all === 'true') await this.getUsers()
+
     this.configurations = await this.getConfigurations([new Constraint('usuario_codigo', this.currentUser?.id)])
-
-    // this.lastRegister =
-    //   format(this.workRecords[this.workRecords.length - 1]?.datetime, 'HH:mm') +
-    //   ' - ' +
-    //   format(
-    //     this.workRecords[this.workRecords.length - 1]?.datetime,
-    //     'dd/MM/yyyy'
-    //   );
-
     loadFluigCalendar(['#dateStart', '#dateEnd'])
 
-    if (!this.configurations || this.configurations?.length === 0) {
+    console.log(this.configurations)
+    if (!this.configurations) {
       let folderData = {
-        parentFolderId: 140903,
+        parentFolderId: 91793,
         documentDescription: this.currentUser?.fullName,
         versionDescription: 'VersionDescription',
         expires: 'false',
@@ -137,6 +138,35 @@ export class PontoComponent implements OnInit {
     this.setHoursWorked()
   }
 
+  async getProfile(constraint: Constraint[] = []): Promise<void> {
+    constraint.push(new Constraint('codigo_usuario', this.currentUser?.id))
+    return new Promise((resolve) => {
+      this.formularioService
+        .getData('vinculoPerfilPonto', constraint)
+        .pipe(first())
+        .subscribe({
+          next: async (response: any) => {
+            return new Promise((resolve) => {
+              this.formularioService
+                .getData('perfilPonto2', [new Constraint('documentid', response[0]?.codigo_perfil)])
+                .pipe(first())
+                .subscribe({
+                  next: async (response) => {
+                    console.log(response)
+                    this.profile = await response[0]
+                    this.currentUserService.profile = this.profile
+                  },
+                })
+              resolve()
+            })
+          },
+          error: (ex) => {
+            Swal.fire({ icon: 'error', title: 'Oops...', html: ex })
+          },
+        })
+    })
+  }
+
   async postFolder(folderData: any): Promise<void> {
     return new Promise(async (resolve) => {
       this.gedService.postFolder(folderData).subscribe(
@@ -146,54 +176,6 @@ export class PontoComponent implements OnInit {
         },
         (error) => console.error('Erro ao cadastrar pasta:', error),
       )
-    })
-  }
-
-  async postConfigurations(): Promise<void> {
-    const now = this.currentDate.datetime
-    return new Promise(async (resolve) => {
-      let data = [
-        {
-          fieldId: 'datetime',
-          value: now,
-        },
-        {
-          fieldId: 'criado_em',
-          value: format(now, 'yyyy-MM-dd'),
-        },
-
-        {
-          fieldId: 'usuario_nome',
-          value: this.currentUser?.fullName,
-        },
-        {
-          fieldId: 'usuario_codigo',
-          value: this.currentUser?.id,
-        },
-        {
-          fieldId: 'status',
-          value: 'active',
-        },
-        {
-          fieldId: 'codigo_foto',
-          value: '',
-        },
-        {
-          fieldId: 'codigo_pasta',
-          value: this.folder?.content?.documentId,
-        },
-      ]
-
-      this.formularioService
-        .postData(140900, data)
-        .pipe(first())
-        .subscribe({
-          next: (response) => {
-            console.log(response)
-            this.configurations = response
-            resolve()
-          },
-        })
     })
   }
 
@@ -216,9 +198,9 @@ export class PontoComponent implements OnInit {
     })
   }
 
-  async viewWorkRecord(documentId: number) {
+  async onOpenModalViewWorkRecord(documentId: number) {
     this.currentWorkRecord = this.workRecords.filter((elem: any) => elem.documentid === documentId)[0]
-    const configTargetUser: ConfigurationWorkRecord = await this.getConfigurations([
+    const configTargetUser: ConfigurationWorkRecord | null = await this.getConfigurations([
       new Constraint('usuario_codigo', this.currentWorkRecord?.usuario_codigo),
     ])
 
@@ -226,6 +208,7 @@ export class PontoComponent implements OnInit {
     const viewWorkRecordDialog = this.dialog.open(ViewPontoComponent, {
       data: {
         workRecord: this.currentWorkRecord,
+        profile: this.profile,
       },
     })
 
@@ -236,7 +219,7 @@ export class PontoComponent implements OnInit {
           console.log(result)
           if (result === 'approved') {
             this.putWorkRecord(this.currentWorkRecord?.documentid, [{ fieldId: 'status', value: 'approved' }])
-            this.putConfigurations(configTargetUser?.documentid, [
+            this.putConfigurations(configTargetUser!.documentid, [
               { fieldId: 'codigo_foto', value: this.currentWorkRecord?.foto_codigo },
             ])
             return
@@ -279,7 +262,8 @@ export class PontoComponent implements OnInit {
     // Obtém a localização do usuário
     await this.getCurrentLocation()
     await this.getAddress()
-    await this.getDateTime()
+    // await this.getDateTime()
+    this.currentDate = { datetime: new Date().toISOString() }
 
     const isAtWork = this.verifyAddress()
     if (!isAtWork) {
@@ -300,7 +284,7 @@ export class PontoComponent implements OnInit {
     } else {
       Swal.fire({
         icon: 'success',
-        title: `Ponto registrado! (${this.currentWorkRecord.cardid})`,
+        title: `Ponto registrado! (${this.currentWorkRecord?.cardId})`,
         html: `Localização atual: ${this.currentAddress}`,
       })
     }
@@ -320,7 +304,7 @@ export class PontoComponent implements OnInit {
 
   async postWorkRecord(): Promise<void> {
     return new Promise(async (resolve) => {
-      await this.getDateTime()
+      this.currentDate = { datetime: new Date().toISOString() }
       const now = this.currentDate.datetime
 
       this.lastRegister = format(now, 'HH:mm') + ' - ' + format(now, 'dd/MM/yyyy')
@@ -398,46 +382,17 @@ export class PontoComponent implements OnInit {
     })
   }
 
-  setHoursWorked() {
-    // Filtra os registros de trabalho do dia atual para o usuário atual
-    const todayWorkRecords = this.workRecords.filter((record: WorkRecord) => {
-      return (
-        record.criado_em === format(this.currentDate.datetime, 'yyyy-MM-dd') &&
-        Number(record.usuario_codigo) === this.currentUser?.id
-      )
-    })
-
-    const hoursWorkedToday = this.extractWorkHours(todayWorkRecords)
-    console.log(hoursWorkedToday)
-    const totalHoursWorkedToday = calculateTotalHours(hoursWorkedToday)
-    console.log(totalHoursWorkedToday)
-    this.hoursWorkedToday = this.formatHours(totalHoursWorkedToday)
-    console.log(totalHoursWorkedToday)
-
-    const hoursWorkedMonthly = this.extractWorkHours(this.workRecords)
-    const totalHoursWorkedMonthly = calculateTotalHours(hoursWorkedMonthly)
-    this.hoursWorkedMonthly = this.formatHours(totalHoursWorkedMonthly)
-  }
-
-  private extractWorkHours(workRecords: WorkRecord[]): string[][] {
-    const hoursArray: string[][] = []
-    this.getDateTime()
-    return hoursArray
-  }
-
-  private formatHours(totalHours: { totalHours: number; remainingMinutes: number }): string {
-    return `${String(totalHours.totalHours).padStart(2, '0')}:${String(totalHours.remainingMinutes).padStart(2, '0')}`
-  }
-
   async getAllWorkRecords(constraint: Constraint[] = []): Promise<void> {
-    // constraint.push(new Constraint('usuario_codigo', this.currentUser?.id));
-    console.log(this.startDateQuery)
-    constraint.push(
-      new Constraint('criado_em', format(this.startDateQuery, 'yyyy-MM-dd'), format(this.endDateQuery, 'yyyy-MM-dd')),
+    if (
+      this.profile?.view_default === 'true' &&
+      this.profile?.view_all === 'false' &&
+      this.profile?.view_manager === 'false'
     )
+      constraint.push(new Constraint('usuario_codigo', this.currentUser?.id))
 
-    console.log(this.userIdSearchQuery)
-    if (this.userIdSearchQuery) constraint.push(new Constraint('usuario_codigo', this.userIdSearchQuery))
+    // constraint.push(
+    //   new Constraint('criado_em', format(this.startDateQuery, 'yyyy-MM-dd'), format(this.endDateQuery, 'yyyy-MM-dd')),
+    // )
 
     return new Promise((resolve) => {
       this.formularioService
@@ -447,6 +402,7 @@ export class PontoComponent implements OnInit {
           next: (response) => {
             if (response.length) {
               this.workRecords = response
+              this.filteredWorkRecords = this.workRecords
               resolve()
             }
           },
@@ -463,22 +419,22 @@ export class PontoComponent implements OnInit {
     return new Promise((resolve, reject) => {
       this.worldTimeService.getDateTime().subscribe(
         (response) => {
-          this.currentDate = response
+          if (response) {
+            this.currentDate = response
+          } else {
+            this.currentDate = new Date()
+          }
           resolve()
         },
         (error) => {
-          reject('Erro ao obter a hora:' + error)
-          console.error('Erro ao obter a hora:', error)
+          Swal.fire(
+            'Oops!',
+            'Não conseguimos identificar a hora, por favor entre em contato com a administração!',
+            'warning',
+          )
+          reject()
         },
       )
-    })
-  }
-
-  openSnackBar(message: string, action: string) {
-    this._snackBar.open(message, action, {
-      horizontalPosition: 'end',
-      verticalPosition: 'top',
-      duration: 5000,
     })
   }
 
@@ -505,6 +461,75 @@ export class PontoComponent implements OnInit {
     })
   }
 
+  async getConfigurations(constraints: Constraint[]): Promise<ConfigurationWorkRecord | null> {
+    return new Promise((resolve, reject) => {
+      this.formularioService
+        .getData('configRegistroPonto', constraints)
+        .pipe(first())
+        .subscribe({
+          next: (response) => {
+            if (response.length) {
+              resolve(response[0])
+            } else {
+              resolve(null)
+            }
+          },
+          error: (ex) => {
+            Swal.fire({ icon: 'error', title: 'Oops...', html: ex })
+            reject()
+          },
+        })
+    })
+  }
+
+  async postConfigurations(): Promise<void> {
+    const now = this.currentDate.datetime
+    return new Promise(async (resolve) => {
+      let data = [
+        {
+          fieldId: 'datetime',
+          value: now,
+        },
+        {
+          fieldId: 'criado_em',
+          value: format(now, 'yyyy-MM-dd'),
+        },
+
+        {
+          fieldId: 'usuario_nome',
+          value: this.currentUser?.fullName,
+        },
+        {
+          fieldId: 'usuario_codigo',
+          value: this.currentUser?.id,
+        },
+        {
+          fieldId: 'status',
+          value: 'active',
+        },
+        {
+          fieldId: 'codigo_foto',
+          value: '',
+        },
+        {
+          fieldId: 'codigo_pasta',
+          value: this.folder?.content?.documentId,
+        },
+      ]
+
+      this.formularioService
+        .postData(92035, data)
+        .pipe(first())
+        .subscribe({
+          next: (response) => {
+            console.log(response)
+            this.configurations = response
+            resolve()
+          },
+        })
+    })
+  }
+
   async putConfigurations(documentId: number, data: DataValues[]) {
     this.formularioService
       .putData(92035, documentId, data)
@@ -515,26 +540,6 @@ export class PontoComponent implements OnInit {
           this.getAllWorkRecords()
         },
       })
-  }
-  getConfigurations(constraints: Constraint[]): Promise<ConfigurationWorkRecord> {
-    return new Promise((resolve, reject) => {
-      this.formularioService
-        .getData('configRegistroPonto', constraints)
-        .pipe(first())
-        .subscribe({
-          next: (response) => {
-            console.log('configurations')
-            console.log(response)
-            if (response.length) {
-              resolve(response[0])
-            }
-          },
-          error: (ex) => {
-            Swal.fire({ icon: 'error', title: 'Oops...', html: ex })
-            reject()
-          },
-        })
-    })
   }
 
   getAddress(): Promise<void> {
@@ -572,7 +577,7 @@ export class PontoComponent implements OnInit {
       let constraint: Constraint[] = []
       constraint.push(new Constraint('active', true))
 
-      await this.formularioService
+      this.formularioService
         .getData('colleague', constraint)
         .pipe(first())
         .subscribe({
@@ -592,7 +597,7 @@ export class PontoComponent implements OnInit {
   }
 
   geCurrentUser(): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       this.currentUserService
         .getCurrentUser()
         .pipe(first())
@@ -603,15 +608,21 @@ export class PontoComponent implements OnInit {
           },
           error: (ex) => {
             Swal.fire({ icon: 'error', title: 'Oops...', html: ex })
-            resolve()
+            reject()
           },
         })
     })
   }
 
-  filterUsers() {
+  filterSearch() {
     this.filteredUsers = this.users.filter((user: any) =>
-      user.colleagueName.toLowerCase().includes(this.userSearchQuery.toLowerCase()),
+      user.colleagueName.toLowerCase().includes(this.searchQuery.toLowerCase()),
+    )
+    this.filteredWorkRecords = this.workRecords.filter(
+      (workRecord: WorkRecord) =>
+        workRecord.usuario_nome.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        workRecord.dia_semana.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        getStatusWorkRecord(workRecord.status).toLowerCase().includes(this.searchQuery.toLowerCase()),
     )
   }
 
@@ -625,39 +636,6 @@ export class PontoComponent implements OnInit {
     }
 
     return true
-  }
-
-  getWorkRecordClasses(work: string): string[] {
-    if (work === 'active') {
-      return ['bg-slate-100', 'text-slate-500', 'border-slate-500']
-    }
-    if (work === 'pending') {
-      return ['bg-amber-100', 'text-amber-500', 'border-amber-500']
-    }
-    if (work === 'refused') {
-      return ['bg-rose-100', 'text-rose-500', 'border-rose-500']
-    }
-    if (work === 'approved') {
-      return ['bg-emerald-100', 'text-emerald-500', 'border-emerald-500']
-    }
-
-    return ['']
-  }
-
-  getStatus(work: string) {
-    if (work === 'active') {
-      return 'Ativo'
-    }
-    if (work === 'pending') {
-      return 'Pendente'
-    }
-    if (work === 'refused') {
-      return 'Recusado'
-    }
-    if (work === 'approved') {
-      return 'Aprovado'
-    }
-    return ''
   }
 
   generateReceipt(documentId: number) {
@@ -683,10 +661,48 @@ export class PontoComponent implements OnInit {
     )}</p>
         <p>LOCAL: ${this.currentWorkRecord.localidade.toUpperCase()}</p>        
         <p>OBS: ${this.currentWorkRecord.observacao.toUpperCase()}</p>
-        <p>STATUS: ${this.getStatus(this.currentWorkRecord.observacao).toUpperCase()}</p>
+        <p>STATUS: ${getStatusWorkRecord(this.currentWorkRecord.observacao).toUpperCase()}</p>
       </div>`)
 
     printScreen.window.print()
     printScreen.window.close()
+  }
+  setHoursWorked() {
+    // Filtra os registros de trabalho do dia atual para o usuário atual
+    const todayWorkRecords = this.workRecords.filter((record: WorkRecord) => {
+      return (
+        record.criado_em === format(this.currentDate.datetime, 'yyyy-MM-dd') &&
+        Number(record.usuario_codigo) === this.currentUser?.id
+      )
+    })
+
+    const hoursWorkedToday = this.extractWorkHours(todayWorkRecords)
+    console.log(hoursWorkedToday)
+    const totalHoursWorkedToday = calculateTotalHours(hoursWorkedToday)
+    console.log(totalHoursWorkedToday)
+    this.hoursWorkedToday = this.formatHours(totalHoursWorkedToday)
+    console.log(totalHoursWorkedToday)
+
+    const hoursWorkedMonthly = this.extractWorkHours(this.workRecords)
+    const totalHoursWorkedMonthly = calculateTotalHours(hoursWorkedMonthly)
+    this.hoursWorkedMonthly = this.formatHours(totalHoursWorkedMonthly)
+  }
+
+  private extractWorkHours(workRecords: WorkRecord[]): string[][] {
+    const hoursArray: string[][] = []
+    this.currentDate = { datetime: new Date().toISOString() }
+    return hoursArray
+  }
+
+  private formatHours(totalHours: { totalHours: number; remainingMinutes: number }): string {
+    return `${String(totalHours.totalHours).padStart(2, '0')}:${String(totalHours.remainingMinutes).padStart(2, '0')}`
+  }
+
+  openSnackBar(message: string, action: string) {
+    this._snackBar.open(message, action, {
+      horizontalPosition: 'end',
+      verticalPosition: 'top',
+      duration: 5000,
+    })
   }
 }

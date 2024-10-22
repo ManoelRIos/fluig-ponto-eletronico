@@ -36,20 +36,28 @@ export class FormularioService extends BaseService {
   public postData(documentId: number, dataValues: DataValues[]) {
     const body = { values: dataValues };
     return this.httpClient
-      .post<WorkRecord>(`/ecm-forms/api/v2/cardindex/${documentId}/cards`, body)
+      .post<any>(`/ecm-forms/api/v2/cardindex/${documentId}/cards`, body)
       .pipe(first());
   }
 
   public putData(documentId: number, cardId: number, dataValues: DataValues[]) {
     const body = { values: dataValues };
     return this.httpClient
-      .put<WorkRecord>(
+      .put<any>(
         `/ecm-forms/api/v2/cardindex/${documentId}/cards/${cardId}`,
         body
       )
       .pipe(first());
   }
 
+
+  public getPerfilPicture() {
+    return this.httpClient
+      .get<any>(
+        `/collaboration/api/v3/users/manoel.rios/picture`,        
+      )
+      .pipe(first());
+  }
 
 }
 

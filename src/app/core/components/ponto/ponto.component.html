@@ -1,31 +1,39 @@
 <div class="flex flex-wrap justify-between gap-8">
   <div class="flex items-center gap-2 w-96">
     <div class="bg-amber-400 p-1 rounded-lg">
-      <i class="text-slate-800 flaticon flaticon-alarm icon-md" aria-hidden="true"></i>
+      <i class="text-zinc-800 flaticon flaticon-alarm icon-md hover:animate-ping" aria-hidden="true"></i>
     </div>
-    <h2 class="text-slate-700 font-bold m-0">
+    <h2 class="text-zinc-700 font-bold m-0">
       Bem-vindo, {{ currentUser?.firstName }}! Seu Ponto Eletrônico está pronto para você.
     </h2>
   </div>
   <div class="flex flex-wrap items-center gap-4">
     <button
       (click)="onOpenModalFacialRecognition()"
-      class="flex items-end gap-2 p-2 bg-amber-400 text-slate-700 rounded-lg font-bold hover:bg-amber-500 duration-300 ease-out"
+      class="flex items-end gap-2 p-2 bg-amber-400 text-zinc-700 rounded-lg font-bold hover:bg-amber-500 duration-300 ease-out"
     >
       <i class="flaticon flaticon-digital icon-md" aria-hidden="true"></i>
       <span>Registrar ponto</span>
     </button>
 
-    <div class="bg-slate-50 shadow rounded-lg p-2">
+    <div class="bg-zinc-50 shadow rounded-lg p-2">
       <i class="px-2 flaticon flaticon-multiple-register icon-sm" aria-hidden="true"></i>
       <strong>Ultimo registro: </strong> <span> {{ lastRegister }}</span>
     </div>
+
+    <button
+      *ngIf="profile?.criar === 'true'"
+      routerLink="/admin"
+      class="bg-zinc-50 text-zinc-700 py-1 px-2 rounded-lg shadow hover:shadow-2xl ease-linear duration-300"
+    >
+      <i class="flaticon flaticon-settings icon-md hover:animate-spin" aria-hidden="true"></i>
+    </button>
   </div>
 </div>
 <div class="flex items-center justify-start gap-8 pt-8">
-  <div class="bg-slate-50 rounded h-40 w-96 gap-2 shadow-sm">
+  <div class="bg-zinc-50 rounded h-40 w-96 gap-2 shadow-sm">
     <div class="flex flex-col items-start justify-center gap-2 p-8 h-full">
-      <h3 class="text-slate-700 flex items-center gap-2">
+      <h3 class="text-zinc-700 flex items-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 text-amber-900">
           <path
             fill-rule="evenodd"
@@ -41,12 +49,12 @@
       <div class="flex items-center justify-between gap-4 w-full">
         <div>
           <span>Hoje</span>
-          <p class="font-bold text-xl text-slate-700">{{ hoursWorkedToday }} h</p>
+          <p class="font-bold text-xl text-zinc-700">{{ hoursWorkedToday }} h</p>
         </div>
         <div class="h-12 border-l border-gray-300"></div>
         <div>
           <span>Mês</span>
-          <p class="font-bold text-xl text-slate-700">{{ hoursWorkedMonthly }} h</p>
+          <p class="font-bold text-xl text-zinc-700">{{ hoursWorkedMonthly }} h</p>
         </div>
       </div>
     </div>
@@ -59,15 +67,13 @@
     <div class="form-group col-md-2">
       <label for="user" class="sr-only">Data Início</label>
       <div class="input-group">
-        <span class="input-group-addon bg-slate-200 border-slate-200"
-          ><i class="flaticon flaticon-date-range icon-sm text-slate-700" aria-hidden="true"></i
+        <span class="input-group-addon bg-zinc-200 border-zinc-200"
+          ><i class="flaticon flaticon-date-range icon-sm text-zinc-700" aria-hidden="true"></i
         ></span>
         <input
-          (blur)="getAllWorkRecords()"
-          [(ngModel)]="startDateQuery"
           id="dateStart"
           type="text"
-          class="form-control border-slate-200 text-slate-700 placeholder:text-slate-400 rounded-r-lg"
+          class="form-control border-zinc-200 text-zinc-700 placeholder:text-zinc-400 rounded-r-lg"
           placeholder="Data de início"
         />
       </div>
@@ -75,15 +81,13 @@
     <div class="form-group col-md-2">
       <label for="user" class="sr-only">Data fim</label>
       <div class="input-group">
-        <span class="input-group-addon bg-slate-200 border-slate-200"
-          ><i class="flaticon flaticon-date-range icon-sm text-slate-700" aria-hidden="true"></i
+        <span class="input-group-addon bg-zinc-200 border-zinc-200"
+          ><i class="flaticon flaticon-date-range icon-sm text-zinc-700" aria-hidden="true"></i
         ></span>
         <input
-          (input)="getAllWorkRecords()"
-          [(ngModel)]="endDateQuery"
           id="dateEnd"
           type="text"
-          class="form-control border-slate-200 placeholder:text-slate-400 rounded-r-lg"
+          class="form-control border-zinc-200 placeholder:text-zinc-400 rounded-r-lg"
           placeholder="Data fim"
         />
       </div>
@@ -91,19 +95,18 @@
     <div class="form-group col-md-3">
       <label for="user" class="sr-only">Usuário</label>
       <div class="input-group">
-        <span class="input-group-addon bg-slate-200 border-slate-200"
-          ><i class="flaticon flaticon-account-circle icon-sm text-slate-700" aria-hidden="true"></i
-        ></span>
+        <span class="input-group-addon bg-zinc-200 border-zinc-200"
+          ><i class="flaticon flaticon-search icon-sm text-zinc-700" aria-hidden="true"></i>
+        </span>
         <input
           type="text"
-          (blur)="getAllWorkRecords()"
-          (input)="filterUsers()"
-          [(ngModel)]="userSearchQuery"
-          [matAutocomplete]="users"
-          class="form-control border-slate-200 placeholder:text-slate-400 rounded-r-lg"
-          placeholder="Funcionário"
+          (input)="filterSearch()"
+          [(ngModel)]="searchQuery"
+          [matAutocomplete]="seach"
+          class="form-control border-zinc-200 placeholder:text-zinc-400 rounded-r-lg"
+          placeholder="Pesquisar..."
         />
-        <mat-autocomplete #users="matAutocomplete" class="bg-amber-50">
+        <mat-autocomplete #seach="matAutocomplete" class="bg-amber-50">
           @for (user of filteredUsers; track user) {
           <mat-option [value]="user.colleagueName">{{ user.colleagueName }}</mat-option>
           }
@@ -113,8 +116,8 @@
   </div>
 
   <div class="bg-zinc-50 relative overflow-x-auto shadow-md sm:rounded-lg">
-    <table class="w-full text-sm text-left rtl:text-right text-slate-50 overflow-auto">
-      <thead class="text-xs text-slate-700 uppercase bg-amber-100">
+    <table class="w-full text-sm text-left rtl:text-right text-zinc-50 overflow-auto">
+      <thead class="text-xs text-zinc-700 uppercase bg-amber-100">
         <tr>
           <th scope="col" class="px-6 py-3">Data</th>
           <th scope="col" class="px-6 py-3">Usuário</th>
@@ -125,9 +128,9 @@
         </tr>
       </thead>
       <tbody>
-        @for (work of workRecords; track work.id) {
+        @for (work of filteredWorkRecords; track work.id) {
         <tr [class]="work.status === 'refused' ? 'line-through text-rose-600' : ''">
-          <td class="px-6 py-4 font-medium text-slate-900 whitespace-nowrap">
+          <td class="px-6 py-4 font-medium text-zinc-900 whitespace-nowrap">
             {{ format(work.datetime, 'dd/MM/yyyy') }}
           </td>
           <td class="px-6 py-4">{{ work.usuario_nome }}</td>
@@ -135,34 +138,66 @@
           <td class="px-6 py-4">{{ work.horario_registro }}</td>
           <td class="px-6 py-4 text-center">
             <span
-              [class]="getWorkRecordClasses(work.status)"
+              [class]="utils.getWorkRecordClasses(work.status)"
               class="border text-xs font-medium me-2 px-2.5 py-0.5 rounded-lg"
-              >{{ getStatus(work.status) }}</span
+              >{{ utils.getStatusWorkRecord(work.status) }}</span
             >
           </td>
           <td class="flex items-center gap-2 px-6 py-4">
-            <a [matMenuTriggerFor]="workactions" class="font-medium text-slate-500 hover:underline">
+            <a [matMenuTriggerFor]="workactions" class="font-medium text-zinc-500 hover:underline">
               <i class="flaticon flaticon-more-vert icon-md" aria-hidden="true"></i>
             </a>
             <mat-menu #workactions="matMenu" class="bg-amber-50">
               <button
                 type="button"
                 mat-menu-item
-                (click)="viewWorkRecord(work.documentid)"
-                class="flex items-center gap-4 font-medium text-slate-600 hover:underline cursor-pointer"
+                (click)="onOpenModalViewWorkRecord(work.documentid)"
+                class="flex items-center gap-2 font-medium text-zinc-600 hover:underline cursor-pointer"
               >
-                <i class="pr-4 flaticon flaticon-view icon-sm" aria-hidden="true"></i>
-                <span>Abrir</span>
+                <div class="flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="size-4"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+                    />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                  </svg>
+
+                  <span>Abrir</span>
+                </div>
               </button>
               <button
                 type="button"
                 mat-menu-item
                 (click)="generateReceipt(work.documentid)"
-                class="flex items-center gap-4 font-medium text-slate-600 hover:underline cursor-pointer"
+                class="flex items-center gap-2 font-medium text-zinc-600 hover:underline cursor-pointer"
               >
-                <i class="pr-4 flaticon flaticon-log-download icon-sm" aria-hidden="true"></i>
+                <div class="flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="size-4"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15M9 12l3 3m0 0 3-3m-3 3V2.25"
+                    />
+                  </svg>
 
-                <span>Emitir comprovante</span>
+                  <span>Emitir comprovante</span>
+                </div>
               </button>
             </mat-menu>
           </td>

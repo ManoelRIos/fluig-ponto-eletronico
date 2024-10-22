@@ -1,16 +1,20 @@
+import { DataValues } from "@tensorflow/tfjs-core"
+
 export interface WorkRecord {
   id: string | number
   datetime: string
   criado_em: string
-  horario_registro: string // Hora de entrada no formato HH:mm
-  usuario_nome: string // Nome completo do usuário
-  usuario_codigo: number // Código do usuário (tenantId)
+  horario_registro: string
+  usuario_nome: string
+  usuario_codigo: number
+  dia_semana: string
   documentid: number
-  cardid: number
+  cardId: number
   status: WorkStatus
   localidade: string
   observacao: string
   foto_codigo: string
+  values: DataValues
 }
 
 export enum WorkStatus {
