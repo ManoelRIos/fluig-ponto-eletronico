@@ -7,5 +7,9 @@ export interface Role {
   view_all: string
   view_manager: string
   criar: string
+  edit: string
+  approve: string
+  refuse: string
   descricao: string
+  idVinculo?: number
 }

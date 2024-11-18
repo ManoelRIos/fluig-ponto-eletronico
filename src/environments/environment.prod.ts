@@ -8,4 +8,12 @@ export const environment = {
   consumerSecret: '',
   accessToken: '',
   tokenSecret: '',
+  codPerfilPonto: 146946,
+   codVinculoPerfilPonto: 146949,
+   codRegistroPonto: 140901,
+   codConfigPonto: 140900,
+   folderBancoFotos: 140903,
+   codPerfilUser: 147030,
+   formPerfilPonto: 'perfiliPonto',
+   formRegistroPonto: 'registroPonto'
 };

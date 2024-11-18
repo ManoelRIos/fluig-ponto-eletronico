@@ -13,6 +13,7 @@ import { AuthorizationInterceptor } from './core/interceptors/AuthorizationInter
 import { LoadingInterceptor } from './core/interceptors/LoadingInterceptor';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { MatDialogRef } from '@angular/material/dialog';
+import { provideEnvironmentNgxMask } from 'ngx-mask';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -33,5 +34,6 @@ export const appConfig: ApplicationConfig = {
     },
 
     provideAnimationsAsync(),
+    provideEnvironmentNgxMask()
   ],
 };

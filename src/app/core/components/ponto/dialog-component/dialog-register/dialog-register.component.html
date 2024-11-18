@@ -34,10 +34,10 @@
       autoplay
       muted
     ></video>
-    <canvas #canvas class="hide"></canvas>
+    <canvas #canvas style="display: none;" class="hide"></canvas>
   </div>
 
-  <div class="form-group w-full">
+  <div class="form-group w-full input">
     <label for="cpf" class="text-zinc-600">CPF</label>
     <input
      [(ngModel)]="cpf"
@@ -45,6 +45,7 @@
       type="text"
       class="form-control border-zinc-200 placeholder:text-zinc-400 rounded-r-lg"
       placeholder="000.000.000-00"
+      mask="000.000.000-00"
     />
   </div>
 </div>

@@ -10,5 +10,6 @@ export interface ConfigurationWorkRecord {
   localidade: string
   observacao: string
   codigo_foto: string
+  codigo_pasta: string
 }
 
