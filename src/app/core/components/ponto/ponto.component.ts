@@ -1,3 +1,4 @@
+import { MarcacaoPonto, MarcacaoPontoService } from './../../services/protheus/marcacao-ponto.service'
 import { WebcamComponent } from './dialog-component/webcam/webcam.component'
 import { WorldTimeService } from './../../services/world-time.service'
 import { NgClass, NgFor, NgIf } from '@angular/common'
@@ -62,6 +63,7 @@ import { Role } from '../../models/Role'
 })
 export class PontoComponent implements OnInit {
    private formularioService = inject(FormularioService)
+   private marcacaoPonto = inject(MarcacaoPontoService)
    private currentUserService = inject(CurrentUserService)
    private _snackBar = inject(MatSnackBar)
    private gedService = inject(GedService)
@@ -93,19 +95,15 @@ export class PontoComponent implements OnInit {
    cpf: string = ''
    hoursWorkedBalance = ''
 
-   constructor(
-      private geocodingService: GeocodingService,
-      private worldTimeService: WorldTimeService,
-      public dialog: MatDialog,
-   ) {}
+   constructor(private geocodingService: GeocodingService, public dialog: MatDialog) {}
 
    @ViewChild('printSection') printSection!: ElementRef
    @ViewChild('webcamRef') webcamComponent!: WebcamComponent
 
    async ngOnInit() {
       await this.getDateTime()
-       this.hoursWorkedBalance = await this.getHoursWorkedBalance()
-   
+      this.hoursWorkedBalance = await this.getHoursWorkedBalance()
+
       console.log(this.hoursWorkedBalance)
 
       if (!this.currentUserService.currentUser) {
@@ -145,17 +143,14 @@ export class PontoComponent implements OnInit {
    }
 
    async getHoursWorkedBalance(constraint: Constraint[] = []) {
-      const result = await this.formularioService
-         .getData('dsp_getBancoHoras', constraint)
-         .pipe(first())
-         .toPromise()  
+      const result = await this.formularioService.getData('dsp_getBancoHoras', constraint).pipe(first()).toPromise()
 
-         if(result){                        
-            let minutes = Number(result[0]?.total) * 60  
-            console.log(minutes)    
-            return `${Math.floor(result[0]?.total)}:${Math.floor((result[0]?.total % 1) * 60)}`
-         }
-         return '00:00'
+      if (result) {
+         let minutes = Number(result[0]?.total) * 60
+         console.log(minutes)
+         return `${Math.floor(result[0]?.total)}:${Math.floor((result[0]?.total % 1) * 60)}`
+      }
+      return '00:00'
    }
 
    async getProfile(constraint: Constraint[] = []): Promise<any> {
@@ -245,6 +240,7 @@ export class PontoComponent implements OnInit {
                this.putConfigurations(configTargetUser!.documentid, [
                   { fieldId: 'codigo_foto', value: this.currentWorkRecord?.foto_codigo },
                ])
+               this.postMarcacaoPonto()
                return
             }
             if (result === 'refused') {
@@ -340,6 +336,26 @@ export class PontoComponent implements OnInit {
          })
    }
 
+   async postMarcacaoPonto(): Promise<void> {
+      return new Promise(async (resolve) => {
+         let data: MarcacaoPonto = {
+            filial: '0101',
+            hora: 8.46,
+            matricula: '165',
+            data: '20241118',
+         }
+
+         const teste = await this.marcacaoPonto
+         .postMarcacaoPonto(data)
+         .pipe(first())
+         .toPromise()
+
+         console.log(teste)
+
+
+      })
+   }
+
    async postWorkRecord(): Promise<void> {
       return new Promise(async (resolve) => {
          await this.getDateTime()
@@ -421,8 +437,8 @@ export class PontoComponent implements OnInit {
    }
 
    async getAllWorkRecords(constraint: Constraint[] = []): Promise<void> {
-      if (this.profile?.view_all === 'false' && this.profile?.view_manager === 'false'){
-        constraint.push(new Constraint('usuario_codigo', this.currentUser?.id))
+      if (this.profile?.view_all === 'false' && this.profile?.view_manager === 'false') {
+         constraint.push(new Constraint('usuario_codigo', this.currentUser?.id))
       }
 
       return new Promise((resolve) => {

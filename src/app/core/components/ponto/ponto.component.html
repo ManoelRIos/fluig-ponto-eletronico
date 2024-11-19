@@ -1,4 +1,4 @@
-<div class="flex justify-end items-center gap-2">
+<div class="flex max-sm:justify-center justify-end items-center gap-2 max-sm:pb-4">
    <button
       (click)="onOpenModalFacialRecognition()"
       class="flex items-end gap-2 p-2 bg-amber-400 text-zinc-700 rounded-lg font-bold hover:bg-amber-500 duration-300 ease-out"
@@ -9,30 +9,30 @@
    <button
       *ngIf="profile?.criar === 'true'"
       routerLink="/admin"
-      class="bg-zinc-50 text-zinc-700 py-1 px-2 rounded-lg shadow hover:shadow-2xl ease-linear duration-300"
+      class="max-sm:hidden bg-zinc-50 text-zinc-700 py-1 px-2 rounded-lg shadow hover:shadow-2xl ease-linear duration-300"
    >
       <i class="flaticon flaticon-settings icon-md hover:animate-spin" aria-hidden="true"></i>
    </button>
 </div>
-<div class="flex flex-wrap justify-between gap-8 w-full">
+<div class="flex flex-wrap max-sm:justify-center justify-between gap-8 w-full">
    <div class="flex items-center justify-center gap-2 max-w-full">
       <!-- <div class="bg-amber-400 p-1 rounded-lg">
       <i class="text-zinc-800 flaticon flaticon-alarm icon-md hover:animate-ping" aria-hidden="true"></i>
     </div> -->
-      <h1 class="text-zinc-700 font-bold m-0 w-96">
+      <h1 class="text-zinc-700 font-bold m-0 max-w-96 max-sm:text-center">
          Bem-vindo, <span class="text-amber-400">{{ currentUser?.firstName }}</span
          >! Seu Ponto Eletrônico está pronto para você.
       </h1>
       <!-- <img id="clock-in-img" class="w-80" src="{{ environment.assets }}/clock-in.svg" alt="Clock-in" /> -->
    </div>
-   <div class="flex flex-wrap items-center gap-4">
-      <!-- <div class="bg-zinc-50 shadow rounded-lg p-2">
+   <!-- <div class="flex flex-wrap items-center gap-4">
+      <div class="bg-zinc-50 shadow rounded-lg p-2">
       <i class="px-2 flaticon flaticon-multiple-register icon-sm" aria-hidden="true"></i>
       <strong>Ultimo registro: </strong> <span> {{ lastRegister }}</span>
-    </div> -->
-   </div>
+    </div>
+   </div> -->
 </div>
-<div class="flex items-center justify-start gap-8">
+<div class="max-sm:hidden flex items-center justify-start gap-8">
    <div class="bg-zinc-50 border rounded h-40 w-80 gap-2 shadow-sm">
       <div class="flex flex-col items-center justify-center gap-2 p-4 h-full">
          <h3 class="text-zinc-600 flex items-center gap-2">
