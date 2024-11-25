@@ -68,7 +68,7 @@
       </div>
    </div>
 
-   <img class="w-96" src="{{environment.assets}}/calendar.svg" alt="Calendário">
+   <img class="w-96" src="{{ environment.assets }}/calendar.svg" alt="Calendário" />
 
    <div class="bg-zinc-50 relative overflow-x-auto shadow-md sm:rounded-lg">
       <table class="w-full text-sm text-left rtl:text-right text-zinc-50 overflow-auto max-h-96 scroll-auto">
@@ -81,26 +81,139 @@
             </tr>
          </thead>
          <tbody>
-            @for (item of pendingWorkRegiister; track item) {
-            <tr
-               class="bg-white text-center cursor-pointer odd:bg-zinc-100"
-            >
-               <td class="px-6 py-4 font-medium text-zinc-900 whitespace-nowrap">{{item.matricula}}</td>
-               <td class="px-6 py-4">{{item.data}}</td>
-               <td class="px-6 py-4" >{{item.quantidade}}</td>
+            @for (item of pendingWorkRegister; track item) {
+            <tr class="bg-white text-center cursor-pointer odd:bg-zinc-100">
+               <td class="px-6 py-4 font-medium text-zinc-900 whitespace-nowrap">{{ item.matricula }}</td>
+               <td class="px-6 py-4">{{ item.data }}</td>
+               <td class="px-6 py-4">{{ item.quantidade }}</td>
                <td class="px-6 py-4">
-                  <button class="text-zinc-50 font-bold rounded-full bg-emerald-500 p-2">+ adicionar registro</button>
+                  <button
+                     (click)="openModalAddRegister(item)"
+                     class="text-zinc-50 font-bold rounded-full bg-emerald-500 p-2"
+                  >
+                     + adicionar registro
+                  </button>
                </td>
             </tr>
             }
          </tbody>
       </table>
 
-      @if (pendingWorkRegiister.length === 0){
+      @if (pendingWorkRegister.length === 0){
       <div class="w-full flex flex-col items-center justify-center p-4 gap-4">
          <img class="w-36" src="{{ environment.assets }}/no-data.svg" alt="Blank Canva" />
          <p class="text-center text-zinc-400 font-light p-4">Parece que ainda não há dados registrados por aqui.</p>
       </div>
       }
+   </div>
+</div>
+
+<div
+   [ngClass]="modalAddRegisterIsOpen ? '' : 'hidden'"
+   class="fixed inset-0 z-[999] grid h-screen w-screen place-items-center bg-black bg-opacity-60 backdrop-blur-sm transition-opacity duration-300"
+>
+   <div data-dialog="dialog" class="relative m-4 p-4  w-2/5 min-w-[70%] max-w-[70%] rounded-lg bg-white">
+      <div>
+         <div class="flex shrink-0 items-center pt-4 text-xl font-bold text-zinc-700">Marcações</div>
+         <p class="p-0 text-zinc-400">Inclua apenas se não existirem pendências!</p>
+      </div>
+      
+      <div class="relative border-t border-zinc-200 py-4 leading-normal text-zinc-600 font-light">
+         <div class="flex items-center gap-4">
+            <div class="form-group col-md-3 pl-0">
+               <label for="data">Data</label>
+               <input
+                  type="data"
+                  [(ngModel)]="datetime.date"
+                  class="form-control border border-zinc-100"
+                  id="data"
+                  name="data"
+                  placeholder="Data (19/10/2000)"
+               />
+            </div>
+            <div class="form-group col-md-3">
+               <label for="Hora">Hora</label>
+
+               <input
+                  type="hora"
+                  type="time"
+                  class="form-control border border-zinc-100"
+                  id="hora"
+                  name="hora"
+                  placeholder="Hora (00:00)"
+               />
+            </div>
+            <div class="form-group col-md-6">
+               <label for="motivo">Motivo</label>
+
+               <input
+                  type="motivo"
+                  type="text"
+                  class="form-control border border-zinc-100"
+                  id="motivo"
+                  name="motivo"
+                  placeholder="Motivo (Acabei me esquecendo ^^ )"
+               />
+            </div>
+            <button class="">
+               <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="size-6 text-emerald-500 hover:animate-ping duration-150"
+               >
+                  <path
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                     d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                  />
+               </svg>
+            </button>
+         </div>
+         <div class="bg-zinc-50 relative overflow-x-auto sm:rounded-lg">
+            <table class="w-full text-sm text-left rtl:text-right text-zinc-50 overflow-auto">
+               <thead class="text-xs text-zinc-700 uppercase bg-zinc-100">
+                  <tr>
+                     <th scope="col" class="px-6 py-3">Data</th>
+                     <th scope="col" class="px-6 py-3">Usuário</th>
+                     <th scope="col" class="px-6 py-3">Dia</th>
+                     <th scope="col" class="px-6 py-3">Horário</th>
+                     <th scope="col" class="px-6 py-3 text-center">Status</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  @for (work of workRecords; track work.id) {
+                  <tr [class]="work.status === 'refused' ? 'line-through text-rose-600' : ''">
+                     <td class="px-6 py-4 font-medium text-zinc-900 whitespace-nowrap">
+                        {{ format(work.datetime, 'dd/MM/yyyy') }}
+                     </td>
+                     <td class="px-6 py-4">{{ work.usuario_nome }}</td>
+                     <td class="px-6 py-4">{{ work.dia_semana }}</td>
+                     <td class="px-6 py-4">{{ work.horario_registro }}</td>
+                     <td class="px-6 py-4 text-center">
+                        <span
+                           [class]="utils.getWorkRecordClasses(work.status)"
+                           class="border text-xs font-medium me-2 px-2.5 py-0.5 rounded-lg"
+                           >{{ utils.getStatusWorkRecord(work.status) }} </span
+                        >
+                     </td>
+                  </tr>
+                  }
+               </tbody>
+            </table>
+         </div>
+      </div>
+      <div class="flex shrink-0 flex-wrap items-center pt-4 justify-end border-t">
+         <button
+            (click)="closeModalAddRegister()"
+            data-dialog-close="true"
+            class="rounded-md border border-transparent py-2 px-4 text-center text-sm transition-all text-zinc-600 hover:bg-zinc-100 focus:bg-zinc-100 active:bg-zinc-100 disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+            type="button"
+         >
+            Fechar
+         </button>
+      </div>
    </div>
 </div>

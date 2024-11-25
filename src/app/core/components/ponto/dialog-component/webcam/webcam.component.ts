@@ -11,189 +11,193 @@ import { MatSnackBar } from '@angular/material/snack-bar'
 declare const navigator: any
 
 @Component({
-  selector: 'app-webcam',
-  standalone: true,
-  imports: [NgIf, NgClass],
-  templateUrl: './webcam.component.html',
-  styleUrl: './webcam.component.scss',
+   selector: 'app-webcam',
+   standalone: true,
+   imports: [NgIf, NgClass],
+   templateUrl: './webcam.component.html',
+   styleUrl: './webcam.component.scss',
 })
 export class WebcamComponent {
-  WIDTH = 440
-  HEIGHT = 280
-  referenceMatch = true
-  isScanned = ''
+   WIDTH = 440
+   HEIGHT = 280
+   referenceMatch = true
+   isScanned = ''
 
-  @Output() onAuthenticFacialId = new EventEmitter<any>()
-  private gedService = inject(GedService)
-  private _snackBar = inject(MatSnackBar)
+   @Output() onAuthenticFacialId = new EventEmitter<any>()
+   private gedService = inject(GedService)
+   private _snackBar = inject(MatSnackBar)
 
-  @ViewChild('video', { static: true })
-  public video: ElementRef | undefined
-  @ViewChild('canvas', { static: true })
-  public canvasRef: ElementRef | undefined
-  public animationFaceId: ElementRef | undefined
-  @ViewChild('animation')
-  public animation!: ElementRef
-  constructor(public dialogRef: MatDialogRef<WebcamComponent>, @Inject(MAT_DIALOG_DATA) public data: any) {}
+   @ViewChild('video', { static: true })
+   public video: ElementRef | undefined
+   @ViewChild('canvas', { static: true })
+   public canvasRef: ElementRef | undefined
+   public animationFaceId: ElementRef | undefined
+   @ViewChild('animation')
+   public animation!: ElementRef
+   constructor(public dialogRef: MatDialogRef<WebcamComponent>, @Inject(MAT_DIALOG_DATA) public data: any) {}
 
-  onNoClick() {
-    this.stopCamera()
-    this.dialogRef.close(this.referenceMatch)
-  }
-
-  stream: any
-  detection: any
-  resizedDetections: any
-  canvas: any
-  canvasEl: any
-  displaySize: any
-  videoInput: any
-
-  async ngOnInit() {
-    await Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri(`${environment.assets}/models`),
-      faceapi.nets.faceLandmark68Net.loadFromUri(`${environment.assets}/models`),
-      faceapi.nets.faceRecognitionNet.loadFromUri(`${environment.assets}/models`),
-      faceapi.nets.faceExpressionNet.loadFromUri(`${environment.assets}/models`),
-      faceapi.nets.ssdMobilenetv1.loadFromUri(`${environment.assets}/models`),
-    ])
-
-    await this.startVideo()
-    this.detectFaces()
-  }
-
-  getDocument(documentId: string): Promise<{ content: string }> {
-    return new Promise((resolve) => {
-      this.gedService
-        .getDocument(documentId)
-        .pipe(first())
-        .subscribe({
-          next: (response) => {
-            resolve(response)
-          },
-          error: (ex: any) => {
-            resolve(ex)
-          },
-        })
-    })
-  }
-
-  async startVideo(): Promise<void> {
-    return await new Promise((resolve) => {
-      this.videoInput = this.video?.nativeElement
-      navigator.getUserMedia(
-        { video: {}, audio: false },
-        (stream: any) => (this.videoInput.srcObject = stream),
-        (err: any) => console.log(err),
-      )
-      resolve()
-    })
-  }
-  async loadReferenceImage() {
-    const urlImage: any = this.data.configurations?.codigo_foto ? await this.getDocument(this.data.configurations?.codigo_foto) : null
-    if (!urlImage?.content) {
-      this.openSnackBar('Não foi encontrado sua foto no nosso banco, mas já vamos providenciar! :)', '', '', 'center')
-      this.referenceMatch = false
-      this.onNoClick()
-      return
-    }
-
-    const img = await faceapi.fetchImage(urlImage?.content)
-    const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor()
-
-    if (!detections) {
-      throw new Error('No face detected in the reference image')
-    }
-
-    return new faceapi.LabeledFaceDescriptors('reference', [detections.descriptor])
-  }
-
-  async detectFaces() {
-    const labeledFaceDescriptors = await this.loadReferenceImage()
-    if (!labeledFaceDescriptors) {
+   onNoClick() {
       this.stopCamera()
-      return
-    }
+      this.dialogRef.close(this.referenceMatch)
+   }
 
-    const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.6)
+   stream: any
+   detection: any
+   resizedDetections: any
+   canvas: any
+   canvasEl: any
+   displaySize: any
+   videoInput: any
 
-    let counterReference = 0
-    let seconds = 0
-    let interval = setInterval(async () => {
-      this.canvas = faceapi.createCanvasFromMedia(this.videoInput)
-      this.canvasEl = this.canvasRef?.nativeElement
-      this.canvasEl.appendChild(this.canvas)
-      this.canvas.setAttribute('id', 'canvass')
-      this.canvas.setAttribute(
-        'style',
-        `position: absolute; 
-             top: 75px; 
-             left: 100px`,
-      )
+   async ngOnInit() {
+      await Promise.all([
+         faceapi.nets.tinyFaceDetector.loadFromUri(`${environment.assets}/models`),
+         faceapi.nets.faceLandmark68Net.loadFromUri(`${environment.assets}/models`),
+         faceapi.nets.faceRecognitionNet.loadFromUri(`${environment.assets}/models`),
+         faceapi.nets.faceExpressionNet.loadFromUri(`${environment.assets}/models`),
+         faceapi.nets.ssdMobilenetv1.loadFromUri(`${environment.assets}/models`),
+      ])
 
-      this.displaySize = {
-        width: this.videoInput.width,
-        height: this.videoInput.height,
+      await this.startVideo()
+      this.detectFaces()
+   }
+
+   getDocument(documentId: string): Promise<{ content: string }> {
+      return new Promise((resolve) => {
+         this.gedService
+            .getDocument(documentId)
+            .pipe(first())
+            .subscribe({
+               next: (response) => {
+                  resolve(response)
+               },
+               error: (ex: any) => {
+                  resolve(ex)
+               },
+            })
+      })
+   }
+
+   async startVideo(): Promise<void> {
+      return await new Promise(async (resolve) => {
+         this.videoInput = this.video?.nativeElement
+         const stream = await navigator.mediaDevices.getUserMedia({ video: {}, audio: false })
+         this.videoInput.srcObject = stream
+         resolve()
+      })
+   }
+   async loadReferenceImage() {
+      const urlImage: any = this.data.configurations?.codigo_foto
+         ? await this.getDocument(this.data.configurations?.codigo_foto)
+         : null
+      if (!urlImage?.content) {
+         this.openSnackBar(
+            'Não foi encontrado sua foto no nosso banco, mas já vamos providenciar! :)',
+            '',
+            '',
+            'center',
+         )
+         this.referenceMatch = false
+         this.onNoClick()
+         return
       }
 
-      faceapi.matchDimensions(this.canvas, this.displaySize)
-      this.detection = await faceapi
-        .detectAllFaces(this.videoInput, new faceapi.TinyFaceDetectorOptions())
-        .withFaceLandmarks()
-        .withFaceDescriptors() // Adiciona a detecção de descritores
+      const img = await faceapi.fetchImage(urlImage?.content)
+      const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor()
 
-      this.resizedDetections = faceapi.resizeResults(this.detection, this.displaySize)
+      if (!detections) {
+         throw new Error('No face detected in the reference image')
+      }
 
-      // Limpa o canvas
-      this.canvas.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height)
+      return new faceapi.LabeledFaceDescriptors('reference', [detections.descriptor])
+   }
 
-      // Verificar correspondência de rostos
-      this.resizedDetections.forEach((detection: any) => {
-        const bestMatch = faceMatcher.findBestMatch(detection.descriptor)
+   async detectFaces() {
+      const labeledFaceDescriptors = await this.loadReferenceImage()
+      if (!labeledFaceDescriptors) {
+         this.stopCamera()
+         return
+      }
 
-        console.log(bestMatch)
-        if (bestMatch.label === 'reference') {
-          counterReference += 1
-        } else {
-          this.openSnackBar('Centralize o rosto!', '')
-        }
+      const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.6)
 
-        if (seconds === 20) {
-          if (counterReference > 10) {
-            this.referenceMatch = true
-            clearInterval(interval)
-            this.onNoClick()
-          } else {
-            this.stopCamera()
-            this.referenceMatch = false
-            clearInterval(interval)
-            this.onNoClick()
-          }
-        }
+      let counterReference = 0
+      let seconds = 0
+      let interval = setInterval(async () => {
+         this.canvas = faceapi.createCanvasFromMedia(this.videoInput)
+         this.canvasEl = this.canvasRef?.nativeElement
+         this.canvasEl.appendChild(this.canvas)
+         this.canvas.setAttribute('id', 'canvass')
+         this.canvas.setAttribute(
+            'style',
+            `position: absolute; 
+             top: 75px; 
+             left: 100px`,
+         )
 
-        console.log('counterReference : ' + counterReference)
-        seconds += 1
+         this.displaySize = {
+            width: this.videoInput.width,
+            height: this.videoInput.height,
+         }
+
+         faceapi.matchDimensions(this.canvas, this.displaySize)
+         this.detection = await faceapi
+            .detectAllFaces(this.videoInput, new faceapi.TinyFaceDetectorOptions())
+            .withFaceLandmarks()
+            .withFaceDescriptors() // Adiciona a detecção de descritores
+
+         this.resizedDetections = faceapi.resizeResults(this.detection, this.displaySize)
+
+         // Limpa o canvas
+         this.canvas.getContext('2d').clearRect(0, 0, this.canvas.width, this.canvas.height)
+
+         // Verificar correspondência de rostos
+         this.resizedDetections.forEach((detection: any) => {
+            const bestMatch = faceMatcher.findBestMatch(detection.descriptor)
+
+            console.log(bestMatch)
+            if (bestMatch.label === 'reference') {
+               counterReference += 1
+            } else {
+               this.openSnackBar('Centralize o rosto!', '')
+            }
+
+            if (seconds === 10) {
+               if (counterReference > 5) {
+                  this.referenceMatch = true
+                  clearInterval(interval)
+                  this.onNoClick()
+               } else {
+                  this.stopCamera()
+                  this.referenceMatch = false
+                  clearInterval(interval)
+                  this.onNoClick()
+               }
+            }
+
+            console.log('counterReference : ' + counterReference)
+            seconds += 1
+         })
+      }, 100)
+
+      console.log(' this.referenceMatch', this.referenceMatch)
+   }
+
+   stopCamera() {
+      console.log(this.videoInput.srcObject)
+      if (this.videoInput.srcObject) {
+         const tracks = this.videoInput.srcObject.getTracks()
+         tracks.forEach((track: any) => {
+            track.stop()
+         })
+      }
+   }
+
+   openSnackBar(message: string, action: string, positionY: any = 'top', positionX: any = 'end') {
+      this._snackBar.open(message, action, {
+         horizontalPosition: positionX,
+         verticalPosition: positionY,
+         duration: 5000,
       })
-    }, 100)
-
-    console.log(' this.referenceMatch', this.referenceMatch)
-  }
-
-  stopCamera() {
-    console.log(this.videoInput.srcObject)
-    if (this.videoInput.srcObject) {
-      const tracks = this.videoInput.srcObject.getTracks()
-      tracks.forEach((track: any) => {
-        track.stop()
-      })
-    }
-  }
-
-  openSnackBar(message: string, action: string, positionY: any = 'top', positionX: any = 'end') {
-    this._snackBar.open(message, action, {
-      horizontalPosition: positionX,
-      verticalPosition: positionY,
-      duration: 5000,
-    })
-  }
+   }
 }

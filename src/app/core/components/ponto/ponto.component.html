@@ -1,4 +1,4 @@
-<div class="flex max-sm:justify-center justify-end items-center gap-2 max-sm:pb-4">
+<div class="flex  max-sm:justify-center justify-end items-center gap-2 max-sm:pb-4">
    <button
       (click)="onOpenModalFacialRecognition()"
       class="flex items-end gap-2 p-2 bg-amber-400 text-zinc-700 rounded-lg font-bold hover:bg-amber-500 duration-300 ease-out"
@@ -80,13 +80,13 @@
             </svg>
             Pendências
          </h3>
-         <p class="font-bold text-3xl text-zinc-700">10</p>
+         <p class="font-bold text-3xl text-zinc-700">{{pendingWorkRegister.length}}</p>
       </div>
    </div>
    <img id="clock-in-img" class="w-60" src="{{ environment.assets }}/clock-in.svg" alt="Clock-in" />
 </div>
 
-<div class="pt-8">
+<div class="pt-8 max-sm:hidden">
    <div class="row">
       <div class="form-group col-md-2">
          <label for="user" class="sr-only">Data Início</label>
@@ -96,9 +96,12 @@
             ></span>
             <input
                id="dateStart"
-               type="text"
+               type="date"
                class="form-control border-zinc-200 text-zinc-700 placeholder:text-zinc-400 rounded-r-lg"
                placeholder="Data de início"
+               [(ngModel)]="searchDate.startDate"
+               (blur)="getAllWorkRecords()"
+
             />
          </div>
       </div>
@@ -110,9 +113,11 @@
             ></span>
             <input
                id="dateEnd"
-               type="text"
+               type="date"
                class="form-control border-zinc-200 placeholder:text-zinc-400 rounded-r-lg"
                placeholder="Data fim"
+               [(ngModel)]="searchDate.endDate"
+               (blur)="getAllWorkRecords()"                              
             />
          </div>
       </div>
@@ -147,7 +152,7 @@
                <th scope="col" class="px-6 py-3">Usuário</th>
                <th scope="col" class="px-6 py-3">Dia</th>
                <th scope="col" class="px-6 py-3">Horário</th>
-               <th scope="col" class="px-6 py-3">Status</th>
+               <th scope="col" class="px-6 py-3 text-center">Status</th>
                <th scope="col" class="px-6 py-3">Ações</th>
             </tr>
          </thead>
@@ -164,7 +169,7 @@
                   <span
                      [class]="utils.getWorkRecordClasses(work.status)"
                      class="border text-xs font-medium me-2 px-2.5 py-0.5 rounded-lg"
-                     >{{ utils.getStatusWorkRecord(work.status) }}</span
+                     >{{ utils.getStatusWorkRecord(work.status) }} @if(work.status_integracao === 'true'){<span>/ Integrado</span>}@else{<span>/ Não Integrado</span>}</span
                   >
                </td>
                <td class="flex items-center gap-2 px-6 py-4">

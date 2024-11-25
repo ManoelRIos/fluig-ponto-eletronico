@@ -16,7 +16,8 @@ export class AuthorizationInterceptor implements HttpInterceptor {
     '/ecm/upload',
     '/api/public/2.0/documents/getDownloadURL',
     '/api/public/2.0/folderdocuments/create',
-    '/collaboration/api/v3/users/manoel.rios/picture',
+    '/api/public/2.0/users/'
+
   ]
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {

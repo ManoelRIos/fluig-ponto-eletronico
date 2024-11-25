@@ -10,7 +10,7 @@ export function getGeoLocation(): any {
 export function distanceCalculate(
   originLat: number,
   originLng: number,
-  destinationLat: number,
+  destinationLat: number ,
   destinationLng: number,
 ) {
   const R = 6371 // Raio da Terra em km
@@ -88,4 +88,8 @@ export function getWorkRecordClasses(work: string): string[] {
   }
 
   return ['']
+}
+
+export function formatToBrDate(date: string): string{
+  return date?.replaceAll('-', '')
 }

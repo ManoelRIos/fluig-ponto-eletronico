@@ -15,6 +15,7 @@ export interface WorkRecord {
   observacao: string
   foto_codigo: string
   values: DataValues
+  status_integracao: string
 }
 
 export enum WorkStatus {

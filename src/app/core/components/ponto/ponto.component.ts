@@ -1,7 +1,6 @@
-import { MarcacaoPonto, MarcacaoPontoService } from './../../services/protheus/marcacao-ponto.service'
+import { MarcacaoPontoService } from './../../services/protheus/marcacao-ponto.service'
 import { WebcamComponent } from './dialog-component/webcam/webcam.component'
-import { WorldTimeService } from './../../services/world-time.service'
-import { NgClass, NgFor, NgIf } from '@angular/common'
+import { NgClass, NgIf } from '@angular/common'
 import { Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core'
 import Swal from 'sweetalert2'
 import { GeocodingService } from '../../services/google/geocoding.service'
@@ -15,7 +14,13 @@ import { CurrentUser } from '../../interfaces'
 import loadFluigCalendar from '../../utils/loadFluigCalendar'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { calculateTotalHours, distanceCalculate, getStatusWorkRecord, getWorkRecordClasses } from '../../utils/utils'
+import {
+   calculateTotalHours,
+   distanceCalculate,
+   formatToBrDate,
+   getStatusWorkRecord,
+   getWorkRecordClasses,
+} from '../../utils/utils'
 
 import { MatDialog, MatDialogModule } from '@angular/material/dialog'
 import { MatSnackBar } from '@angular/material/snack-bar'
@@ -29,9 +34,9 @@ import { MatFormFieldModule } from '@angular/material/form-field'
 import { DialogRegisterComponent } from './dialog-component/dialog-register/dialog-register.component'
 import { GedService } from '../../services/fluig/ged.service'
 import { ViewPontoComponent } from './dialog-component/view-ponto/view-ponto.component'
-import { WorkRecord, WorkStatus } from '../../models/WorkRecord'
+import { WorkRecord } from '../../models/WorkRecord'
 
-import { NgIconComponent, provideIcons } from '@ng-icons/core'
+import { provideIcons } from '@ng-icons/core'
 import { heroUsers } from '@ng-icons/heroicons/outline'
 import { DataValues } from '../../interfaces/data-values.interface'
 
@@ -50,10 +55,7 @@ import { Role } from '../../models/Role'
       MatSelectModule,
       MatButtonModule,
       FormsModule,
-      WebcamComponent,
       MatDialogModule,
-      NgClass,
-      NgIconComponent,
       NgIf,
       RouterLink,
    ],
@@ -69,9 +71,16 @@ export class PontoComponent implements OnInit {
    private gedService = inject(GedService)
    public environment = environment
    public format = format
-   public utils = { getStatusWorkRecord: getStatusWorkRecord, getWorkRecordClasses: getWorkRecordClasses }
+   public utils = {
+      getStatusWorkRecord: getStatusWorkRecord,
+      getWorkRecordClasses: getWorkRecordClasses,
+      formatToBrDate: formatToBrDate,
+   }
 
+   pendingWorkRegister: any = []
    profile!: Role
+
+   searchDate = { startDate: format(new Date(), 'yyyy-MM-dd'), endDate: format(new Date(), 'yyyy-MM-dd') }
    userIdSearchQuery: any
    observation: string = ''
    latitude: number = 0
@@ -114,10 +123,9 @@ export class PontoComponent implements OnInit {
 
       this.currentUser = this.currentUserService.currentUser
       await this.getProfile([new Constraint('codigo_usuario', this.currentUser?.id)])
-      if (this.profile?.view_all === 'true') await this.getEmployees()
+      // if (this.profile?.view_all === 'true') await this.getEmployees()
 
       this.configurations = await this.getConfigurations([new Constraint('usuario_codigo', this.currentUser?.id)])
-      loadFluigCalendar(['#dateStart', '#dateEnd'])
 
       if (!this.configurations) {
          let folderData = {
@@ -139,16 +147,30 @@ export class PontoComponent implements OnInit {
       }
 
       await this.getAllWorkRecords()
+      await this.getPendingsWorkRegister()
       // this.setHoursWorked()
+   }
+
+   async getPendingsWorkRegister(constraint: Constraint[] = []) {
+      const result = await this.formularioService
+         .getData('dsp_getPendenciasPonto', constraint)
+         .pipe(first())
+         .toPromise()
+
+      if (result) {
+         this.pendingWorkRegister = result
+      }
    }
 
    async getHoursWorkedBalance(constraint: Constraint[] = []) {
       const result = await this.formularioService.getData('dsp_getBancoHoras', constraint).pipe(first()).toPromise()
 
       if (result) {
-         let minutes = Number(result[0]?.total) * 60
-         console.log(minutes)
-         return `${Math.floor(result[0]?.total)}:${Math.floor((result[0]?.total % 1) * 60)}`
+         if (result.length > 0) {
+            let minutes = Number(result[0]?.total) * 60
+            console.log(minutes)
+            return `${Math.floor(result[0]?.total)}:${Math.floor((result[0]?.total % 1) * 60)}`
+         }
       }
       return '00:00'
    }
@@ -231,21 +253,34 @@ export class PontoComponent implements OnInit {
          },
       })
 
-      viewWorkRecordDialog.afterClosed().subscribe((result) => {
+      viewWorkRecordDialog.afterClosed().subscribe(async (result) => {
          console.log(result)
          if (result) {
             console.log(result)
             if (result === 'approved') {
                this.putWorkRecord(this.currentWorkRecord?.documentid, [{ fieldId: 'status', value: 'approved' }])
-               this.putConfigurations(configTargetUser!.documentid, [
-                  { fieldId: 'codigo_foto', value: this.currentWorkRecord?.foto_codigo },
+               if (this.currentWorkRecord?.foto_codigo) {
+                  this.putConfigurations(configTargetUser!.documentid, [
+                     { fieldId: 'codigo_foto', value: this.currentWorkRecord?.foto_codigo },
+                  ])
+               }
+               const isIntegrated = await this.postMarcacaoPonto(this.currentWorkRecord)
+               this.putWorkRecord(this.currentWorkRecord?.documentid, [
+                  { fieldId: 'status_integracao', value: isIntegrated },
                ])
-               this.postMarcacaoPonto()
                return
             }
             if (result === 'refused') {
                // Your logic to update work record with refused status
                this.putWorkRecord(this.currentWorkRecord?.documentid, [{ fieldId: 'status', value: 'refused' }]) // Replace with your actual update logic
+               return
+            }
+            if (result === 'integrate') {
+               const isIntegrated = await this.postMarcacaoPonto(this.currentWorkRecord)
+               console.log(isIntegrated)
+               this.putWorkRecord(this.currentWorkRecord?.documentid, [
+                  { fieldId: 'status_integracao', value: isIntegrated },
+               ])
                return
             }
          }
@@ -336,24 +371,28 @@ export class PontoComponent implements OnInit {
          })
    }
 
-   async postMarcacaoPonto(): Promise<void> {
-      return new Promise(async (resolve) => {
-         let data: MarcacaoPonto = {
-            filial: '0101',
-            hora: 8.46,
-            matricula: '165',
-            data: '20241118',
-         }
+   async postMarcacaoPonto(data: WorkRecord): Promise<string> {
+      const constraint: Constraint[] = []
+      const date = new Date(data.datetime)
+      // console.log(Number(format(date, 'HH') + '.' + (10 * Number(format(date, 'mm'))) / 6))
+      constraint.push(new Constraint('hora', format(date, 'HH.mm')))
+      constraint.push(new Constraint('matricula', this.configurations?.matricula))
+      constraint.push(new Constraint('data', format(date, 'yyyyMMdd')))
 
-         const teste = await this.marcacaoPonto
-         .postMarcacaoPonto(data)
+      console.log(constraint)
+      const response = await this.formularioService
+         .getData('dsp_postMarcacaoPonto', constraint)
          .pipe(first())
          .toPromise()
+      console.log(response)
 
-         console.log(teste)
+      if (response) {
+         if (response[0].code === '200') {
+            return 'true'
+         }
+      }
 
-
-      })
+      return 'false'
    }
 
    async postWorkRecord(): Promise<void> {
@@ -370,7 +409,7 @@ export class PontoComponent implements OnInit {
             },
             {
                fieldId: 'criado_em',
-               value: format(now, 'yyyy-MM-dd'),
+               value: format(now, 'yyyyMMdd'),
             },
             {
                fieldId: 'dia_semana',
@@ -412,13 +451,6 @@ export class PontoComponent implements OnInit {
                fieldId: 'foto_codigo',
                value: this.photo?.content?.id,
             },
-            // {
-            //   fieldId: 'tempo_segundos',
-            //   value: intervalToDuration({
-            //     start: '00:00',
-            //     end: format(now, 'HH:mm'),
-            //   }),
-            // },
          ]
 
          this.formularioService
@@ -437,8 +469,19 @@ export class PontoComponent implements OnInit {
    }
 
    async getAllWorkRecords(constraint: Constraint[] = []): Promise<void> {
+      console.log(this.searchDate)
       if (this.profile?.view_all === 'false' && this.profile?.view_manager === 'false') {
          constraint.push(new Constraint('usuario_codigo', this.currentUser?.id))
+      }
+      if (this.searchDate.startDate) {
+         console.log(this.utils.formatToBrDate(this.searchDate.startDate))
+         constraint.push(
+            new Constraint(
+               'criado_em',
+               this.utils.formatToBrDate(this.searchDate.startDate),
+               this.utils.formatToBrDate(this.searchDate.endDate),
+            ),
+         )
       }
 
       return new Promise((resolve) => {
@@ -537,7 +580,7 @@ export class PontoComponent implements OnInit {
             },
             {
                fieldId: 'criado_em',
-               value: format(now, 'yyyy-MM-dd'),
+               value: format(now, 'yyyyMMdd'),
             },
 
             {
@@ -652,8 +695,16 @@ export class PontoComponent implements OnInit {
       )
    }
 
-   verifyAddress(): boolean {
-      const distance = distanceCalculate(this.latitude, this.longitude, -15.796429361669256, -47.88541332224672)
+   async verifyAddress(): Promise<boolean> {
+      const local = await this.currentUserService.getLocalUser(this.currentUser.code).pipe(first()).toPromise()
+
+      console.log(local)
+
+      let distance = 2
+
+      if (local?.latitude && local?.latitude > 0) {
+         distance = distanceCalculate(this.latitude, this.longitude, local?.latitude, local?.longitude)
+      }
 
       console.log('distance: ' + distance)
 
@@ -693,7 +744,7 @@ export class PontoComponent implements OnInit {
       // Filtra os registros de trabalho do dia atual para o usuário atual
       const todayWorkRecords = this.workRecords.filter((record: WorkRecord) => {
          return (
-            record.criado_em === format(this.currentDate.datetime, 'yyyy-MM-dd') &&
+            record.criado_em === format(this.currentDate.datetime, 'yyyyMMdd') &&
             Number(record.usuario_codigo) === this.currentUser?.id
          )
       })

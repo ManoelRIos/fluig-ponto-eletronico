@@ -42,6 +42,7 @@ export class AdminComponent {
    searchQuery = ''
    routerActive = 'users'
    urlFoto = ''
+   configurationsSelected!: ConfigurationWorkRecord | null
    configurations!: ConfigurationWorkRecord | null
    roles: Role[] = []
    profileUserSelected!: Role | null
@@ -177,7 +178,9 @@ export class AdminComponent {
 
          if (vinculoPerfil && vinculoPerfil.length > 0) {
             const perfilPonto = await this.formularioService
-               .getData(this.environment.formPerfilPonto, [new Constraint('documentid', vinculoPerfil[0]?.codigo_perfil)])
+               .getData(this.environment.formPerfilPonto, [
+                  new Constraint('documentid', vinculoPerfil[0]?.codigo_perfil),
+               ])
                .pipe(first())
                .toPromise()
 
@@ -229,7 +232,7 @@ export class AdminComponent {
       return document
    }
 
-   async putConfigurations(documentId: number, data: DataValues[]) {
+   async putConfigurations(documentId: number | any, data: DataValues[]) {
       const response = await this.formularioService
          .putData(this.environment.codConfigPonto, documentId, data)
          .pipe(first())
@@ -274,6 +277,11 @@ export class AdminComponent {
       if (role) {
          ;(role as any)[fieldId] = value
       }
+   }
+
+   editConfigurations() {
+      const data = [{ fieldId: 'matricula', value: this.configurationsSelected?.matricula }]
+      this.putConfigurations(this.configurationsSelected?.documentid, data)
    }
 
    filterSearch() {
@@ -347,19 +355,19 @@ export class AdminComponent {
 
       const file = {
          description: format(new Date(), 'yyyyMMddHHmm') + '_' + this.currentUser.code + '.png',
-         parentId: this.configurations?.codigo_pasta,
+         parentId: this.configurationsSelected?.codigo_pasta,
          attachments: [{ fileName: event.target.files[0].name }],
       }
 
       const responseDocument = await this.createDocument(file)
       console.log(responseDocument)
 
-      const responseConfig = this.putConfigurations(this.configurations!.documentid, [
+      const responseConfig = this.putConfigurations(this.configurationsSelected!.documentid, [
          { fieldId: 'codigo_foto', value: responseDocument?.content.id },
       ])
       console.log(responseConfig)
 
-      if (this.configurations?.codigo_foto) {
+      if (this.configurationsSelected?.codigo_foto) {
          this.urlFoto = (await this.getDocument(responseDocument.content.id))?.content
          console.log(this.urlFoto)
       }
@@ -367,8 +375,8 @@ export class AdminComponent {
 
    async selectUser(user: User) {
       this.userSelected = user
-      this.configurations = await this.getConfigurations([new Constraint('usuario_codigo', user.userTenantId)])
-      if (!this.configurations) {
+      this.configurationsSelected = await this.getConfigurations([new Constraint('usuario_codigo', user.userTenantId)])
+      if (!this.configurationsSelected) {
          let folderData = {
             parentFolderId: this.environment.folderBancoFotos,
             documentDescription: user.colleagueName,
@@ -417,7 +425,9 @@ export class AdminComponent {
             },
          ]
          await this.postConfigurations(data)
-         this.configurations = await this.getConfigurations([new Constraint('usuario_codigo', user.userTenantId)])
+         this.configurationsSelected = await this.getConfigurations([
+            new Constraint('usuario_codigo', user.userTenantId),
+         ])
       }
       this.profileUserSelected = await this.getProfile([new Constraint('codigo_usuario', user.userTenantId)])
       if (!this.profileUserSelected) {
@@ -439,13 +449,13 @@ export class AdminComponent {
 
       this.userSelected.profile = this.profileUserSelected
       console.log(this.userSelected)
-      this.urlFoto = (await this.getDocument(this.configurations!.codigo_foto))?.content
+      this.urlFoto = (await this.getDocument(this.configurationsSelected!.codigo_foto))?.content
    }
 
    unselectUser() {
       this.userSelected = null
       this.urlFoto = ''
-      this.configurations = null
+      this.configurationsSelected = null
       this.profileUserSelected = null
    }
 

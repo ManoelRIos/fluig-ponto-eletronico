@@ -11,5 +11,6 @@ export interface ConfigurationWorkRecord {
   observacao: string
   codigo_foto: string
   codigo_pasta: string
+  matricula: string
 }
 
