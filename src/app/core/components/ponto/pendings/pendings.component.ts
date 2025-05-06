@@ -17,8 +17,8 @@ import { FormsModule } from '@angular/forms'
 
 @Component({
    selector: 'app-pendings',
-   standalone: true,      
-      imports: [RouterLink, NgClass,FormsModule],
+   standalone: true,
+   imports: [RouterLink, NgClass, FormsModule],
    templateUrl: './pendings.component.html',
    styleUrl: './pendings.component.scss',
 })

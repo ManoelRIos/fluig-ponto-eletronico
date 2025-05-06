@@ -444,8 +444,8 @@ export class AdminComponent {
          const newProfile = await this.postLinkProfile(data)
          console.log('newProfile')
          console.log(newProfile)
+         this.profileUserSelected = await this.getProfile([new Constraint('codigo_usuario', user.userTenantId)])
       }
-      this.profileUserSelected = await this.getProfile([new Constraint('codigo_usuario', user.userTenantId)])
 
       this.userSelected.profile = this.profileUserSelected
       console.log(this.userSelected)

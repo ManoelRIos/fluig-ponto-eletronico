@@ -291,7 +291,7 @@
       </div>
       <div class="row pt-4">
          <div class="form-group col-md-2">
-            <label class="text-zinc-700 m-0" for="perfil">Matrícula: </label>
+            <label class="text-zinc-700 m-0" for="matricula">Matrícula: </label>
             <input
                (blur)="editConfigurations()"
                [(ngModel)]="configurationsSelected!.matricula"
@@ -306,7 +306,7 @@
             <label class="text-zinc-700 m-0" for="perfil">Perfil: </label>
             <select
                (change)="editUserProfile(profile.documentid)"
-               [(ngModel)]="profile.documentid"
+               [(ngModel)]="this.userSelected.profile.documentid"
                name="perfil"
                id="perfil"
                class="form-control rounded border border-amber-400"

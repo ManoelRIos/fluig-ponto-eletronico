@@ -21,3 +21,5 @@ export interface FluigWCMAPI {
     userLogin: string;
     logoff(): void;
 }
+
+
